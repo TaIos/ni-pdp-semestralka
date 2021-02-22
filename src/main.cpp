@@ -2,6 +2,7 @@
 #include <cstring>
 #include <fstream>
 #include <vector>
+#include <limits>
 #include <algorithm>
 
 // chess pieces
@@ -115,11 +116,11 @@ public:
         return max_depth;
     }
 
-    const ChessPiece &getBishop() const {
+    ChessPiece &getBishop() {
         return bishop;
     }
 
-    const ChessPiece &getHorse() const {
+    ChessPiece &getHorse() {
         return horse;
     }
 
@@ -183,26 +184,38 @@ public:
 
 class NextPossibleMoves {
 public:
-    static vector<int> for_horse(const ChessBoard &g) {
-        return vector<int>();
+    static vector<pair<int, int>> for_horse(const ChessBoard &g) {
+        g.getPawnCnt();
+        return vector<pair<int, int>>();
     };
 
-    static vector<int> for_bishop(const ChessBoard &g) {
-        return vector<int>();
+    static vector<pair<int, int>> for_bishop(const ChessBoard &g) {
+        g.getPawnCnt();
+        return vector<pair<int, int>>();
     };
 };
 
 
-void bb_dfs(ChessBoard g, long depth, char play, long &best) {
-    if (depth > g.getMaxDepth() || depth >= best) return;
+void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counter) {
+    counter++;
+    if (depth >= best || depth > g.getMaxDepth()) return;
     if (g.getPawnCnt() == 0) {
         best = depth;
         return;
     }
+
     if (play == HORSE) {
-        // TODO
+        for (auto p : NextPossibleMoves::for_horse(g)) {
+            ChessBoard cpy = ChessBoard(g);
+            cpy.getHorse().move(p.first, p.second);
+            bb_dfs(cpy, depth + 1, BISHOP, best, counter);
+        }
     } else if (play == BISHOP) {
-        // TODO
+        for (auto p : NextPossibleMoves::for_bishop(g)) {
+            ChessBoard cpy = ChessBoard(g);
+            cpy.getBishop().move(p.first, p.second);
+            bb_dfs(cpy, depth + 1, HORSE, best, counter);
+        }
     }
 }
 
@@ -210,8 +223,17 @@ int main(int argc, char **argv) {
 
     for (int i = 1; i < argc; i++) {
         string filename = argv[i];
-        cout << ChessBoard(filename);
+        long best = numeric_limits<long>::max();
+        long counter = 0;
+
+        ChessBoard board = ChessBoard(filename);
+        cout << board;
+        bb_dfs(board, 0, BISHOP, best, counter);
+
+        cout << "Cena: " << best << endl;
+        cout << "Počet volání: " << counter << endl;
     }
+
 
     return 0;
 }
