@@ -2,10 +2,15 @@
 #include <cstring>
 #include <fstream>
 
+#define MAX_DEPTH_REACHED  -1
+#define HORSE  'J'
+#define BISHOP 'S'
+#define PAWN 'P'
+
 using namespace std;
 
 class Grid {
-private:
+public:
     char *data = nullptr;
     int size;
     int row_len;
@@ -13,23 +18,30 @@ private:
 
     // PDD specific
     int k; // přirozené číslo, k>5, reprezentující délku strany šachovnice S o velikosti kxk
-    int q; // přirozené číslo q<k^2/2 reprezentující počet rozmístěných figurek na šachovnici S
+    int max_depth; // přirozené číslo max_depth<k^2/2 reprezentující počet rozmístěných figurek na šachovnici S
+    int hp; // horse position
+    int bp; // bishop position
+    int npwn; // number of pawns
 
-public:
     Grid(const string &filename) {
+
         ifstream ifs(filename);
         ifs >> k;
-        ifs >> q;
+        ifs >> max_depth;
         size = k * k;
         row_len = k;
         this->filename = filename;
         data = new char[size];
         memset(data, 'X', size);
 
+        npwn = 0;
         char c;
         char *head = data;
         while (ifs.get(c) && head < data + size) {
             if (c != '\n' && c != '\r') {
+                if (c == BISHOP) bp = int(head - data);
+                if (c == HORSE) hp = int(head - data);
+                if (c == PAWN) npwn++;
                 *(head++) = c;
             }
         }
@@ -49,7 +61,9 @@ public:
 
     friend ostream &operator<<(ostream &os, const Grid &g) {
         os << g.filename << endl;
-        os << "k=" << g.k << ", q=" << g.q << endl;
+        os << "k=" << g.k << ", max_depth=" << g.max_depth << endl;
+        os << "Kůň na indexu " << g.hp << ", střelec na indexu " << g.bp << endl;
+        os << "Počet pěšáků " << g.npwn << endl;
         for (int i = 0; i < g.size; i++) {
             os << g.data[i];
             if ((i + 1) % g.row_len) os << " | ";
@@ -60,6 +74,31 @@ public:
 
 
 };
+
+
+struct Solution {
+    double time;
+    long cost;
+    long ncalls;
+
+    Solution(double time, long cost, long ncalls) : time(time), cost(cost), ncalls(ncalls) {}
+
+};
+
+Solution bb_dfs_base(Grid grid) {
+
+    return Solution(0, 0, 0);
+}
+
+long bb_dfs(Grid g, long depth, char move) {
+    if (depth > g.max_depth) return MAX_DEPTH_REACHED;
+    if (move == HORSE) {
+
+    } else if (move == BISHOP) {
+
+    }
+    return 0;
+}
 
 int main(int argc, char **argv) {
 
