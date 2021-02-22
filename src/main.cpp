@@ -4,8 +4,7 @@
 #include <vector>
 #include <algorithm>
 
-#define MAX_DEPTH_REACHED  -1
-#define BETTER_SOLUTION_EXISTS  -2
+// chess pieces
 #define HORSE  'J'
 #define BISHOP 'S'
 #define PAWN 'P'
@@ -13,133 +12,190 @@
 
 using namespace std;
 
-class Grid {
-public:
-    char *data = nullptr;
+class ChessBoard {
+private:
+    char *grid = nullptr;
     int size;
     int row_len;
-    string filename;
-
-    const static char INVALID_AT = '\0';
+    int pawn_cnt;
 
     // PDD specific
-    int k; // přirozené číslo, k>5, reprezentující délku strany šachovnice S o velikosti kxk
-    int max_depth; // přirozené číslo max_depth<k^2/2 reprezentující počet rozmístěných figurek na šachovnici S
-    int hp; // for_horse position
-    int bp; // for_bishop position
-    int npwn; // number of pawns
+    int max_depth;
 
-    Grid(const string &filename) {
+    void set_at(int row, int col, char value) {
+        grid[row * row_len + col] = value;
+    }
 
+    class ChessPiece {
+    private:
+        int row;
+        int col;
+        char type;
+        ChessBoard *g;
+
+    public:
+        ChessPiece() = default;
+
+        ChessPiece(int row, int col, const char type, ChessBoard *g) : row(row), col(col), type(type), g(g) {}
+
+        void move(int row, int col) {
+            if (g->at(row, col) == PAWN) g->pawn_cnt--;
+            g->set_at(row, col, type);
+            g->set_at(this->row, this->col, EMPTY);
+            this->row = row;
+            this->col = col;
+        }
+
+        int getRow() const {
+            return row;
+        }
+
+        int getCol() const {
+            return col;
+        }
+
+    };
+
+    ChessPiece bishop;
+    ChessPiece horse;
+
+public:
+
+    // returned when accessing invalid position in chess board
+    const static char INVALID_AT = '\0';
+
+    ChessBoard(const string &filename) {
         ifstream ifs(filename);
-        ifs >> k;
+        ifs >> row_len;
         ifs >> max_depth;
-        size = k * k;
-        row_len = k;
-        this->filename = filename;
-        data = new char[size];
-        memset(data, EMPTY, size);
+        size = row_len * row_len;
+        pawn_cnt = 0;
+        grid = new char[size];
+        memset(grid, EMPTY, size);
 
-        npwn = 0;
         char c;
-        char *head = data;
-        while (ifs.get(c) && head < data + size) {
+        char *head = grid;
+        while (ifs.get(c) && head < grid + size) {
             if (c != '\n' && c != '\r') {
-                if (c == BISHOP) bp = int(head - data);
-                if (c == HORSE) hp = int(head - data);
-                if (c == PAWN) npwn++;
+                int idx = int(head - grid);
+                int row = int(idx / row_len);
+                int col = idx % row_len;
+                if (c == BISHOP) bishop = ChessPiece(row, col, BISHOP, this);
+                if (c == HORSE) horse = ChessPiece(row, col, HORSE, this);
+                if (c == PAWN) pawn_cnt++;
                 *(head++) = c;
             }
         }
         ifs.close();
     };
 
-    Grid(const Grid &oth) {
-        data = new char[oth.size];
-        memcpy(data, oth.data, oth.size);
+    ChessBoard(const ChessBoard &oth) {
+        grid = new char[oth.size];
+        memcpy(grid, oth.grid, oth.size);
         size = oth.size;
         row_len = oth.row_len;
+        bishop = ChessPiece(oth.bishop.getRow(), oth.bishop.getCol(), BISHOP, this);
+        horse = ChessPiece(oth.horse.getRow(), oth.horse.getCol(), HORSE, this);
     };
+
+    ~ChessBoard() {
+        delete[] grid;
+    }
 
     char at(int row, int col) const {
         if (row < 0 || col < 0 || row * row_len + col >= size) return INVALID_AT;
-        return data[row * row_len + col];
+        return grid[row * row_len + col];
     };
 
-    ~Grid() {
-        if (data) delete[] data;
+    int getPawnCnt() const {
+        return pawn_cnt;
     }
 
-    friend ostream &operator<<(ostream &os, const Grid &g) {
-        os << g.filename << endl;
-        os << "k=" << g.k << ", max_depth=" << g.max_depth << endl;
-        os << "Kůň na indexu " << g.hp << ", střelec na indexu " << g.bp << endl;
-        os << "Počet pěšáků " << g.npwn << endl;
+    int getMaxDepth() const {
+        return max_depth;
+    }
+
+    const ChessPiece &getBishop() const {
+        return bishop;
+    }
+
+    const ChessPiece &getHorse() const {
+        return horse;
+    }
+
+    friend ostream &operator<<(ostream &os, const ChessBoard &g) {
+        os << "Délka strany šachovnice: " << g.row_len << ", maximální hloubka: " << g.max_depth << endl;
+        os << "Kůň na (" << g.horse.getRow() << "," << g.horse.getCol() << ")" << endl;
+        os << "Střelec na (" << g.bishop.getRow() << "," << g.bishop.getCol() << ")" << endl;
+        os << "Počet pěšáků " << g.pawn_cnt << endl;
         for (int i = 0; i < g.size; i++) {
-            os << g.data[i];
+            os << g.grid[i];
             if ((i + 1) % g.row_len) os << " | ";
             else os << endl;
         }
         return os << endl;
     }
-
-
 };
 
-class Eval {
+class EvalPosition {
 public:
-    static int for_horse(const Grid &g, int idx) {
-        if (g.data[idx] == PAWN) return 2;
+    static int for_horse(const ChessBoard &g, int row, int col) {
+        if (g.at(row, col) == PAWN) return 2;
         return 0;
     };
 
-    static int for_bishop(const Grid &g, int row, int col) {
+    static int for_bishop(const ChessBoard &g, int row, int col) {
         if (g.at(row, col) == PAWN) return 2;
         char c;
 
         // DIAG DOWN RIGHT
-        for (int i = 1, c = g.at(row + i, col + i); c != Grid::INVALID_AT; i++) { if (c == PAWN) return 1; }
+        for (int i = 1;; i++) {
+            c = g.at(row + i, col + i);
+            if (c == ChessBoard::INVALID_AT) break;
+            if (c == PAWN) return 1;
+        }
 
         // DIAG DOWN LEFT
-        for (int i = 1, c = g.at(row + i, col - i); c != Grid::INVALID_AT; i++) { if (c == PAWN) return 1; }
+        for (int i = 1;; i++) {
+            c = g.at(row + i, col - i);
+            if (c == ChessBoard::INVALID_AT) break;
+            if (c == PAWN) return 1;
+        }
 
         // DIAG UP RIGHT
-        for (int i = 1, c = g.at(row - i, col + i); c != Grid::INVALID_AT; i++) { if (c == PAWN) return 1; }
+        for (int i = 1;; i++) {
+            c = g.at(row - i, col + i);
+            if (c == ChessBoard::INVALID_AT) break;
+            if (c == PAWN) return 1;
+        }
 
         // DIAG UP LEFT
-        for (int i = 1, c = g.at(row - i, col - i); c != Grid::INVALID_AT; i++) { if (c == PAWN) return 1; }
+        for (int i = 1;; i++) {
+            c = g.at(row - i, col - i);
+            if (c == ChessBoard::INVALID_AT) break;
+            if (c == PAWN) return 1;
+        }
 
         return 0;
     }
 
 };
 
-class Next {
+class NextPossibleMoves {
 public:
-    static vector<int> for_horse(const Grid &g) {
-        vector<pair<int, int>> candidates(8);
-        int idx;
-
-        // UP-RIGHT
-
-
-//        sort(candidates.begin(), candidates.end(), greater<>());
+    static vector<int> for_horse(const ChessBoard &g) {
         return vector<int>();
-
     };
 
-    static vector<int> for_bishop(const Grid &g) {
-        vector<int> candidates(g.k * 2 - 2);
-
-//        sort(candidates.begin(), candidates.end(), greater<>());
-        return candidates;
+    static vector<int> for_bishop(const ChessBoard &g) {
+        return vector<int>();
     };
 };
 
 
-void bb_dfs(Grid g, long depth, char play, long &best) {
-    if (depth > g.max_depth || depth >= best) return;
-    if (g.npwn == 0) {
+void bb_dfs(ChessBoard g, long depth, char play, long &best) {
+    if (depth > g.getMaxDepth() || depth >= best) return;
+    if (g.getPawnCnt() == 0) {
         best = depth;
         return;
     }
@@ -152,11 +208,9 @@ void bb_dfs(Grid g, long depth, char play, long &best) {
 
 int main(int argc, char **argv) {
 
-    return 0;
-
     for (int i = 1; i < argc; i++) {
         string filename = argv[i];
-        cout << Grid(filename);
+        cout << ChessBoard(filename);
     }
 
     return 0;
