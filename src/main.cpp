@@ -1,11 +1,15 @@
 #include <iostream>
 #include <cstring>
 #include <fstream>
+#include <vector>
+#include <algorithm>
 
 #define MAX_DEPTH_REACHED  -1
+#define BETTER_SOLUTION_EXISTS  -2
 #define HORSE  'J'
 #define BISHOP 'S'
 #define PAWN 'P'
+#define EMPTY 'X'
 
 using namespace std;
 
@@ -16,11 +20,13 @@ public:
     int row_len;
     string filename;
 
+    const static char INVALID_AT = '\0';
+
     // PDD specific
     int k; // přirozené číslo, k>5, reprezentující délku strany šachovnice S o velikosti kxk
     int max_depth; // přirozené číslo max_depth<k^2/2 reprezentující počet rozmístěných figurek na šachovnici S
-    int hp; // horse position
-    int bp; // bishop position
+    int hp; // for_horse position
+    int bp; // for_bishop position
     int npwn; // number of pawns
 
     Grid(const string &filename) {
@@ -32,7 +38,7 @@ public:
         row_len = k;
         this->filename = filename;
         data = new char[size];
-        memset(data, 'X', size);
+        memset(data, EMPTY, size);
 
         npwn = 0;
         char c;
@@ -55,6 +61,11 @@ public:
         row_len = oth.row_len;
     };
 
+    char at(int row, int col) const {
+        if (row < 0 || col < 0 || row * row_len + col >= size) return INVALID_AT;
+        return data[row * row_len + col];
+    };
+
     ~Grid() {
         if (data) delete[] data;
     }
@@ -75,32 +86,73 @@ public:
 
 };
 
+class Eval {
+public:
+    static int for_horse(const Grid &g, int idx) {
+        if (g.data[idx] == PAWN) return 2;
+        return 0;
+    };
 
-struct Solution {
-    double time;
-    long cost;
-    long ncalls;
+    static int for_bishop(const Grid &g, int row, int col) {
+        if (g.at(row, col) == PAWN) return 2;
+        char c;
 
-    Solution(double time, long cost, long ncalls) : time(time), cost(cost), ncalls(ncalls) {}
+        // DIAG DOWN RIGHT
+        for (int i = 1, c = g.at(row + i, col + i); c != Grid::INVALID_AT; i++) { if (c == PAWN) return 1; }
+
+        // DIAG DOWN LEFT
+        for (int i = 1, c = g.at(row + i, col - i); c != Grid::INVALID_AT; i++) { if (c == PAWN) return 1; }
+
+        // DIAG UP RIGHT
+        for (int i = 1, c = g.at(row - i, col + i); c != Grid::INVALID_AT; i++) { if (c == PAWN) return 1; }
+
+        // DIAG UP LEFT
+        for (int i = 1, c = g.at(row - i, col - i); c != Grid::INVALID_AT; i++) { if (c == PAWN) return 1; }
+
+        return 0;
+    }
 
 };
 
-Solution bb_dfs_base(Grid grid) {
+class Next {
+public:
+    static vector<int> for_horse(const Grid &g) {
+        vector<pair<int, int>> candidates(8);
+        int idx;
 
-    return Solution(0, 0, 0);
-}
+        // UP-RIGHT
 
-long bb_dfs(Grid g, long depth, char move) {
-    if (depth > g.max_depth) return MAX_DEPTH_REACHED;
-    if (move == HORSE) {
 
-    } else if (move == BISHOP) {
+//        sort(candidates.begin(), candidates.end(), greater<>());
+        return vector<int>();
 
+    };
+
+    static vector<int> for_bishop(const Grid &g) {
+        vector<int> candidates(g.k * 2 - 2);
+
+//        sort(candidates.begin(), candidates.end(), greater<>());
+        return candidates;
+    };
+};
+
+
+void bb_dfs(Grid g, long depth, char play, long &best) {
+    if (depth > g.max_depth || depth >= best) return;
+    if (g.npwn == 0) {
+        best = depth;
+        return;
     }
-    return 0;
+    if (play == HORSE) {
+        // TODO
+    } else if (play == BISHOP) {
+        // TODO
+    }
 }
 
 int main(int argc, char **argv) {
+
+    return 0;
 
     for (int i = 1; i < argc; i++) {
         string filename = argv[i];
