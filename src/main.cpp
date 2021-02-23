@@ -242,7 +242,8 @@ public:
 
         char c;
         int nrow, ncol;
-        vector<NextMove> moves = vector<NextMove>(8);
+        vector<NextMove> moves = vector<NextMove>();
+        moves.reserve(8);
         for (const auto &i : cand) {
             nrow = i[0];
             ncol = i[1];
@@ -257,7 +258,8 @@ public:
     };
 
     static vector<NextMove> for_bishop(const ChessBoard &g) {
-        vector<NextMove> moves = vector<NextMove>(2 * g.getRowLen() - 2);
+        vector<NextMove> moves = vector<NextMove>();
+        moves.reserve(2 * g.getRowLen() - 2);
         sort(moves.rbegin(), moves.rend());
         return moves;
     };
