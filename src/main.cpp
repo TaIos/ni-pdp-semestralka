@@ -221,7 +221,7 @@ public:
 
         struct comparator {
             bool operator()(const NextMove &a, const NextMove &b) const {
-                return a.col > b.col;
+                return a.cost > b.cost;
             }
         };
     };
@@ -315,7 +315,6 @@ public:
         return moves;
     };
 };
-
 
 void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counter) {
     counter++;
