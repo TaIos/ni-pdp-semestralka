@@ -219,9 +219,11 @@ public:
 
         NextMove(int row, int col, int cost) : row(row), col(col), cost(cost) {}
 
-        bool operator<(const NextMove &oth) const {
-            return cost < oth.col;
-        }
+        struct comparator {
+            bool operator()(const NextMove &a, const NextMove &b) const {
+                return a.col > b.col;
+            }
+        };
     };
 
     static vector<NextMove> for_horse(const ChessBoard &g) {
@@ -253,7 +255,7 @@ public:
             }
         }
 
-        sort(moves.rbegin(), moves.rend());
+        sort(moves.begin(), moves.end(), NextPossibleMoves::NextMove::comparator());
         return moves;
     };
 
@@ -309,7 +311,7 @@ public:
             }
         }
 
-        sort(moves.rbegin(), moves.rend());
+        sort(moves.begin(), moves.end(), NextPossibleMoves::NextMove::comparator());
         return moves;
     };
 };
