@@ -262,8 +262,8 @@ public:
     static vector<NextMove> for_bishop(const ChessBoard &g) {
         vector<NextMove> moves = vector<NextMove>();
         moves.reserve(2 * g.getRowLen() - 2);
-        int row = g.getHorse().getRow();
-        int col = g.getHorse().getCol();
+        int row = g.getBishop().getRow();
+        int col = g.getBishop().getCol();
         int nrow, ncol;
         char c;
 
@@ -274,7 +274,7 @@ public:
             c = g.at(nrow, ncol);
             if (c == HORSE || c == ChessBoard::INVALID_AT) break;
             if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+                moves.emplace_back(nrow, ncol, EvalPosition::for_bishop(g, nrow, ncol));
             }
         }
 
@@ -285,7 +285,7 @@ public:
             c = g.at(nrow, ncol);
             if (c == HORSE || c == ChessBoard::INVALID_AT) break;
             if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+                moves.emplace_back(nrow, ncol, EvalPosition::for_bishop(g, nrow, ncol));
             }
         }
 
@@ -296,7 +296,7 @@ public:
             c = g.at(nrow, ncol);
             if (c == HORSE || c == ChessBoard::INVALID_AT) break;
             if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+                moves.emplace_back(nrow, ncol, EvalPosition::for_bishop(g, nrow, ncol));
             }
         }
 
@@ -307,7 +307,7 @@ public:
             c = g.at(nrow, ncol);
             if (c == HORSE || c == ChessBoard::INVALID_AT) break;
             if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+                moves.emplace_back(nrow, ncol, EvalPosition::for_bishop(g, nrow, ncol));
             }
         }
 
