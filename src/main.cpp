@@ -118,7 +118,7 @@ public:
     }
 
     char at(int row, int col) const {
-        if (row < 0 || col < 0 || row * row_len + col >= size) return INVALID_AT;
+        if (row < 0 || col < 0 || row >= row_len || col >= row_len) return INVALID_AT;
         return grid[row * row_len + col];
     };
 
