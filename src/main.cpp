@@ -321,6 +321,7 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counte
     if (depth >= best || depth > g.getMaxDepth()) return;
     if (g.getPawnCnt() == 0) {
         best = depth;
+        cout << "Currect best: " << best << endl;
         return;
     }
 
