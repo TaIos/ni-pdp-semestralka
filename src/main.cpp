@@ -9,7 +9,7 @@
 #define HORSE  'J'
 #define BISHOP 'S'
 #define PAWN 'P'
-#define EMPTY 'X'
+#define EMPTY '-'
 
 using namespace std;
 
@@ -23,7 +23,7 @@ private:
     // PDD specific
     int max_depth;
 
-    void set_at(int row, int col, char value) {
+    void setAt(int row, int col, char value) {
         grid[row * row_len + col] = value;
     }
 
@@ -32,20 +32,11 @@ private:
         int row;
         int col;
         char type;
-        ChessBoard *g;
 
     public:
         ChessPiece() = default;
 
-        ChessPiece(int row, int col, const char type, ChessBoard *g) : row(row), col(col), type(type), g(g) {}
-
-        void move(int row, int col) {
-            if (g->at(row, col) == PAWN) g->pawn_cnt--;
-            g->set_at(row, col, type);
-            g->set_at(this->row, this->col, EMPTY);
-            this->row = row;
-            this->col = col;
-        }
+        ChessPiece(int row, int col, char type) : row(row), col(col), type(type) {}
 
         int getRow() const {
             return row;
@@ -55,10 +46,31 @@ private:
             return col;
         }
 
+        char getType() const {
+            return type;
+        }
+
+        void setRow(int row) {
+            ChessPiece::row = row;
+        }
+
+        void setCol(int col) {
+            ChessPiece::col = col;
+        }
+
     };
 
     ChessPiece bishop;
     ChessPiece horse;
+
+
+    void movePiece(ChessPiece p, int row, int col) {
+        if (at(row, col) == PAWN) pawn_cnt--;
+        setAt(row, col, p.getType());
+        setAt(p.getRow(), p.getCol(), EMPTY);
+        p.setRow(row);
+        p.setCol(col);
+    }
 
 public:
 
@@ -81,8 +93,8 @@ public:
                 int idx = int(head - grid);
                 int row = int(idx / row_len);
                 int col = idx % row_len;
-                if (c == BISHOP) bishop = ChessPiece(row, col, BISHOP, this);
-                if (c == HORSE) horse = ChessPiece(row, col, HORSE, this);
+                if (c == BISHOP) bishop = ChessPiece(row, col, BISHOP);
+                if (c == HORSE) horse = ChessPiece(row, col, HORSE);
                 if (c == PAWN) pawn_cnt++;
                 *(head++) = c;
             }
@@ -95,8 +107,8 @@ public:
         memcpy(grid, oth.grid, oth.size);
         size = oth.size;
         row_len = oth.row_len;
-        bishop = ChessPiece(oth.bishop.getRow(), oth.bishop.getCol(), BISHOP, this);
-        horse = ChessPiece(oth.horse.getRow(), oth.horse.getCol(), HORSE, this);
+        bishop = oth.bishop;
+        horse = oth.horse;
     };
 
     ~ChessBoard() {
@@ -108,6 +120,14 @@ public:
         return grid[row * row_len + col];
     };
 
+    void moveBishop(int row, int col) {
+        movePiece(bishop, row, col);
+    }
+
+    void moveHorse(int row, int col) {
+        movePiece(horse, row, col);
+    }
+
     int getPawnCnt() const {
         return pawn_cnt;
     }
@@ -116,12 +136,16 @@ public:
         return max_depth;
     }
 
-    ChessPiece &getBishop() {
+    const ChessPiece &getBishop() const {
         return bishop;
     }
 
-    ChessPiece &getHorse() {
+    const ChessPiece &getHorse() const {
         return horse;
+    }
+
+    int getRowLen() const {
+        return row_len;
     }
 
     friend ostream &operator<<(ostream &os, const ChessBoard &g) {
@@ -184,14 +208,56 @@ public:
 
 class NextPossibleMoves {
 public:
-    static vector<pair<int, int>> for_horse(const ChessBoard &g) {
-        g.getPawnCnt();
-        return vector<pair<int, int>>();
+    struct NextMove {
+        int row;
+        int col;
+        int cost;
+
+        NextMove() = default;
+
+        NextMove(int row, int col, int cost) : row(row), col(col), cost(cost) {}
+
+        bool operator<(const NextMove &oth) const {
+            return cost < oth.col;
+        }
     };
 
-    static vector<pair<int, int>> for_bishop(const ChessBoard &g) {
-        g.getPawnCnt();
-        return vector<pair<int, int>>();
+    static vector<NextMove> for_horse(const ChessBoard &g) {
+        int row = g.getHorse().getRow();
+        int col = g.getHorse().getCol();
+
+        int cand[8][2] = {
+                {row + 2, col + 1},
+                {row + 2, col - 1},
+                {row - 2, col + 1},
+                {row - 2, col - 1},
+
+                {row + 1, col + 2},
+                {row + 1, col - 2},
+                {row - 1, col + 2},
+                {row - 1, col - 2},
+        };
+
+        char c;
+        int nrow, ncol;
+        vector<NextMove> moves = vector<NextMove>(8);
+        for (auto &i : cand) {
+            nrow = i[0];
+            ncol = i[1];
+            c = g.at(nrow, ncol);
+            if (c == EMPTY || c == PAWN) {
+                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+            }
+        }
+
+        sort(moves.rbegin(), moves.rend());
+        return moves;
+    };
+
+    static vector<NextMove> for_bishop(const ChessBoard &g) {
+        vector<NextMove> moves = vector<NextMove>(2 * g.getRowLen() - 2);
+        sort(moves.rbegin(), moves.rend());
+        return moves;
     };
 };
 
@@ -205,15 +271,15 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counte
     }
 
     if (play == HORSE) {
-        for (auto p : NextPossibleMoves::for_horse(g)) {
+        for (auto m : NextPossibleMoves::for_horse(g)) {
             ChessBoard cpy = ChessBoard(g);
-            cpy.getHorse().move(p.first, p.second);
+            cpy.moveHorse(m.row, m.col);
             bb_dfs(cpy, depth + 1, BISHOP, best, counter);
         }
     } else if (play == BISHOP) {
-        for (auto p : NextPossibleMoves::for_bishop(g)) {
+        for (auto m : NextPossibleMoves::for_bishop(g)) {
             ChessBoard cpy = ChessBoard(g);
-            cpy.getBishop().move(p.first, p.second);
+            cpy.moveBishop(m.row, m.col);
             bb_dfs(cpy, depth + 1, HORSE, best, counter);
         }
     }
