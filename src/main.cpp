@@ -64,7 +64,7 @@ private:
     ChessPiece horse;
 
 
-    void movePiece(ChessPiece p, int row, int col) {
+    void movePiece(ChessPiece & p, int row, int col) {
         if (at(row, col) == PAWN) pawn_cnt--;
         setAt(row, col, p.getType());
         setAt(p.getRow(), p.getCol(), EMPTY);
