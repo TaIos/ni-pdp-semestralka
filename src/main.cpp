@@ -64,7 +64,7 @@ private:
     ChessPiece horse;
 
 
-    void movePiece(ChessPiece & p, int row, int col) {
+    void movePiece(ChessPiece &p, int row, int col) {
         if (at(row, col) == PAWN) pawn_cnt--;
         setAt(row, col, p.getType());
         setAt(p.getRow(), p.getCol(), EMPTY);
@@ -260,6 +260,55 @@ public:
     static vector<NextMove> for_bishop(const ChessBoard &g) {
         vector<NextMove> moves = vector<NextMove>();
         moves.reserve(2 * g.getRowLen() - 2);
+        int row = g.getHorse().getRow();
+        int col = g.getHorse().getCol();
+        int nrow, ncol;
+        char c;
+
+        // DIAG DOWN RIGHT
+        for (int i = 1;; i++) {
+            nrow = row - i;
+            ncol = col + 1;
+            c = g.at(nrow, ncol);
+            if (c == HORSE || c == ChessBoard::INVALID_AT) break;
+            if (c == EMPTY || c == PAWN) {
+                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+            }
+        }
+
+        // DIAG DOWN LEFT
+        for (int i = 1;; i++) {
+            nrow = row - i;
+            ncol = col - 1;
+            c = g.at(nrow, ncol);
+            if (c == HORSE || c == ChessBoard::INVALID_AT) break;
+            if (c == EMPTY || c == PAWN) {
+                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+            }
+        }
+
+        // DIAG UP RIGHT
+        for (int i = 1;; i++) {
+            nrow = row + i;
+            ncol = col + 1;
+            c = g.at(nrow, ncol);
+            if (c == HORSE || c == ChessBoard::INVALID_AT) break;
+            if (c == EMPTY || c == PAWN) {
+                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+            }
+        }
+
+        // DIAG UP LEFT
+        for (int i = 1;; i++) {
+            nrow = row + i;
+            ncol = col - 1;
+            c = g.at(nrow, ncol);
+            if (c == HORSE || c == ChessBoard::INVALID_AT) break;
+            if (c == EMPTY || c == PAWN) {
+                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
+            }
+        }
+
         sort(moves.rbegin(), moves.rend());
         return moves;
     };
@@ -275,13 +324,13 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counte
     }
 
     if (play == HORSE) {
-        for (const auto & m : NextPossibleMoves::for_horse(g)) {
+        for (const auto &m : NextPossibleMoves::for_horse(g)) {
             ChessBoard cpy = ChessBoard(g);
             cpy.moveHorse(m.row, m.col);
             bb_dfs(cpy, depth + 1, BISHOP, best, counter);
         }
     } else if (play == BISHOP) {
-        for (const auto & m : NextPossibleMoves::for_bishop(g)) {
+        for (const auto &m : NextPossibleMoves::for_bishop(g)) {
             ChessBoard cpy = ChessBoard(g);
             cpy.moveBishop(m.row, m.col);
             bb_dfs(cpy, depth + 1, HORSE, best, counter);
