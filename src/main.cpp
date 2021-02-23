@@ -270,7 +270,7 @@ public:
         // DIAG DOWN RIGHT
         for (int i = 1;; i++) {
             nrow = row - i;
-            ncol = col + 1;
+            ncol = col + i;
             c = g.at(nrow, ncol);
             if (c == HORSE || c == ChessBoard::INVALID_AT) break;
             if (c == EMPTY || c == PAWN) {
@@ -281,7 +281,7 @@ public:
         // DIAG DOWN LEFT
         for (int i = 1;; i++) {
             nrow = row - i;
-            ncol = col - 1;
+            ncol = col - i;
             c = g.at(nrow, ncol);
             if (c == HORSE || c == ChessBoard::INVALID_AT) break;
             if (c == EMPTY || c == PAWN) {
@@ -292,7 +292,7 @@ public:
         // DIAG UP RIGHT
         for (int i = 1;; i++) {
             nrow = row + i;
-            ncol = col + 1;
+            ncol = col + i;
             c = g.at(nrow, ncol);
             if (c == HORSE || c == ChessBoard::INVALID_AT) break;
             if (c == EMPTY || c == PAWN) {
@@ -303,7 +303,7 @@ public:
         // DIAG UP LEFT
         for (int i = 1;; i++) {
             nrow = row + i;
-            ncol = col - 1;
+            ncol = col - i;
             c = g.at(nrow, ncol);
             if (c == HORSE || c == ChessBoard::INVALID_AT) break;
             if (c == EMPTY || c == PAWN) {
