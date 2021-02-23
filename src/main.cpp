@@ -243,7 +243,7 @@ public:
         char c;
         int nrow, ncol;
         vector<NextMove> moves = vector<NextMove>(8);
-        for (auto &i : cand) {
+        for (const auto &i : cand) {
             nrow = i[0];
             ncol = i[1];
             c = g.at(nrow, ncol);
@@ -273,13 +273,13 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counte
     }
 
     if (play == HORSE) {
-        for (auto m : NextPossibleMoves::for_horse(g)) {
+        for (const auto & m : NextPossibleMoves::for_horse(g)) {
             ChessBoard cpy = ChessBoard(g);
             cpy.moveHorse(m.row, m.col);
             bb_dfs(cpy, depth + 1, BISHOP, best, counter);
         }
     } else if (play == BISHOP) {
-        for (auto m : NextPossibleMoves::for_bishop(g)) {
+        for (const auto & m : NextPossibleMoves::for_bishop(g)) {
             ChessBoard cpy = ChessBoard(g);
             cpy.moveBishop(m.row, m.col);
             bb_dfs(cpy, depth + 1, HORSE, best, counter);
