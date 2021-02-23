@@ -178,28 +178,28 @@ public:
         // DIAG DOWN RIGHT
         for (int i = 1;; i++) {
             c = g.at(row + i, col + i);
-            if (c == ChessBoard::INVALID_AT) break;
+            if (c == ChessBoard::INVALID_AT || c == HORSE) break;
             if (c == PAWN) return 1;
         }
 
         // DIAG DOWN LEFT
         for (int i = 1;; i++) {
             c = g.at(row + i, col - i);
-            if (c == ChessBoard::INVALID_AT) break;
+            if (c == ChessBoard::INVALID_AT || c == HORSE) break;
             if (c == PAWN) return 1;
         }
 
         // DIAG UP RIGHT
         for (int i = 1;; i++) {
             c = g.at(row - i, col + i);
-            if (c == ChessBoard::INVALID_AT) break;
+            if (c == ChessBoard::INVALID_AT || c == HORSE) break;
             if (c == PAWN) return 1;
         }
 
         // DIAG UP LEFT
         for (int i = 1;; i++) {
             c = g.at(row - i, col - i);
-            if (c == ChessBoard::INVALID_AT) break;
+            if (c == ChessBoard::INVALID_AT || c == HORSE) break;
             if (c == PAWN) return 1;
         }
 
