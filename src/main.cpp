@@ -109,6 +109,8 @@ public:
         row_len = oth.row_len;
         bishop = oth.bishop;
         horse = oth.horse;
+        pawn_cnt = oth.pawn_cnt;
+        max_depth = oth.max_depth;
     };
 
     ~ChessBoard() {
