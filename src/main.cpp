@@ -168,16 +168,16 @@ class EvalPosition {
 public:
     static int for_horse(const ChessBoard &g, int row, int col) {
         if (g.at(row, col) == PAWN) return 2;
-        if ( // look if there is pawn nearby
-                g.at(row + 1, col) == PAWN ||
-                g.at(row - 1, col) == PAWN ||
-                g.at(row, col + 1) == PAWN ||
-                g.at(row, col - 1) == PAWN ||
-                g.at(row + 1, col - 1) == PAWN ||
-                g.at(row + 1, col + 1) == PAWN ||
-                g.at(row - 1, col - 1) == PAWN ||
-                g.at(row - 1, col + 1) == PAWN
-                )
+//        if ( // look if there is pawn nearby
+//                g.at(row + 1, col) == PAWN ||
+//                g.at(row - 1, col) == PAWN ||
+//                g.at(row, col + 1) == PAWN ||
+//                g.at(row, col - 1) == PAWN ||
+//                g.at(row + 1, col - 1) == PAWN ||
+//                g.at(row + 1, col + 1) == PAWN ||
+//                g.at(row - 1, col - 1) == PAWN ||
+//                g.at(row - 1, col + 1) == PAWN
+//                )
             return 1;
         return 0;
     };
