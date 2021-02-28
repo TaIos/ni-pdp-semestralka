@@ -317,7 +317,6 @@ public:
 };
 
 void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counter) {
-    counter++;
     if (
             depth + g.getPawnCnt() >= best || // solution with lower cost already exists
             depth + g.getPawnCnt() >= g.getMaxDepth() // max depth would be reached if each play would remove figure
@@ -328,6 +327,7 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counte
         cout << "Update best with: " << best << endl;
         return;
     }
+    counter++;
 
     if (play == HORSE) {
         for (const auto &m : NextPossibleMoves::for_horse(g)) {
