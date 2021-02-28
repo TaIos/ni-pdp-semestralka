@@ -24,6 +24,40 @@ class Task:
                             **kwargs)
         self.result = list(map(int, cp.stdout.strip().split()))
         print(self)
+        self._check_result()
+
+    def _check_result(self):
+        n = int(self.filename[3:])
+        r = self.result[0]
+
+        if n == 1:
+            self._my_assert(r, 5)
+        if n == 2:
+            self._my_assert(r, 14)
+        if n == 3:
+            self._my_assert(r, 12)
+        if n == 4:
+            self._my_assert(r, 14)
+        if n == 5:
+            self._my_assert(r, 12)
+        if n == 6:
+            self._my_assert(r, 16)
+        if n == 7:
+            self._my_assert(r, 16)
+        if n == 8:
+            self._my_assert(r, 5)
+        if n == 9:
+            self._my_assert(r, 26)
+        if n == 10:
+            self._my_assert(r, 20)
+        if n == 11:
+            self._my_assert(r, 18)
+        if n == 12:
+            self._my_assert(r, 22)
+
+    def _my_assert(self, got, ref):
+        if got != ref:
+            print(f' {ref}')
 
     def __str__(self):
         return self.filename + ' ' + ' '.join(str(x) for x in self.result)
