@@ -160,25 +160,14 @@ public:
             if ((i + 1) % g.row_len) os << " | ";
             else os << endl;
         }
-        return os << endl;
+        return os;
     }
 };
 
 class EvalPosition {
 public:
     static int for_horse(const ChessBoard &g, int row, int col) {
-        if (g.at(row, col) == PAWN) return 2;
-//        if ( // look if there is pawn nearby
-//                g.at(row + 1, col) == PAWN ||
-//                g.at(row - 1, col) == PAWN ||
-//                g.at(row, col + 1) == PAWN ||
-//                g.at(row, col - 1) == PAWN ||
-//                g.at(row + 1, col - 1) == PAWN ||
-//                g.at(row + 1, col + 1) == PAWN ||
-//                g.at(row - 1, col - 1) == PAWN ||
-//                g.at(row - 1, col + 1) == PAWN
-//                )
-        return 1;
+        if (g.at(row, col) == PAWN) return 1;
         return 0;
     };
 
@@ -360,11 +349,12 @@ int main(int argc, char **argv) {
         long counter = 0;
 
         ChessBoard board = ChessBoard(filename);
+        cout << board << endl;
         auto start = chrono::high_resolution_clock::now();
         bb_dfs(board, 0, BISHOP, best, counter);
         auto stop = chrono::high_resolution_clock::now();
 
-        // Cena | Počet volání | Čas [ms]
+        cout << "Cena | Počet volání | Čas [ms]" << endl;
         cout << best << " " << counter << " "
              << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << endl;
     }
