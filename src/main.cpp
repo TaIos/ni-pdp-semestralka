@@ -247,27 +247,46 @@ public:
 
         NextMove(int row, int col, int cost) : row(row), col(col), cost(cost) {}
 
+        static bool add_bishop_if_possible(int row, int col, const ChessBoard &g, vector<NextMove> &moves) {
+            char c = g.at(row, col);
+            if (c == HORSE || c == ChessBoard::INVALID_AT) {
+                return false;
+            }
+            if (c == PAWN) {
+                moves.emplace_back(row, col, EvalPosition::for_bishop(g, row, col));
+                return false;
+            }
+            if (c == EMPTY) {
+                moves.emplace_back(row, col, EvalPosition::for_bishop(g, row, col));
+                return true;
+            }
+            return false;
+        }
+
+        static bool add_horse_if_possible(int row, int col, const ChessBoard &g, vector<NextMove> &moves) {
+            char c = g.at(row, col);
+            if (c == EMPTY || c == PAWN) {
+                moves.emplace_back(row, col, EvalPosition::for_horse(g, row, col));
+                return true;
+            }
+            return false;
+        }
+
         struct comparator {
             bool operator()(const NextMove &a, const NextMove &b) const {
                 return a.cost > b.cost;
             }
         };
+
     };
 
     static vector<NextMove> for_horse(const ChessBoard &g) {
         int row = g.getHorse().getRow();
         int col = g.getHorse().getCol();
-        char c;
-        int nrow, ncol;
         vector<NextMove> moves = vector<NextMove>();
         moves.reserve(8);
         for (const auto &cand : NextPossibleMoves::horse_cand) {
-            nrow = cand[0] + row;
-            ncol = cand[1] + col;
-            c = g.at(nrow, ncol);
-            if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
-            }
+            NextMove::add_horse_if_possible(cand[0] + row, cand[1] + col, g, moves);
         }
 
         sort(moves.begin(), moves.end(), NextPossibleMoves::NextMove::comparator());
@@ -279,56 +298,31 @@ public:
         moves.reserve(2 * g.getRowLen() - 2);
         int row = g.getBishop().getRow();
         int col = g.getBishop().getCol();
-        int nrow, ncol;
-        char c;
-
-        // DIAG DOWN RIGHT
-        for (int i = 1;; i++) {
-            nrow = row - i;
-            ncol = col + i;
-            c = g.at(nrow, ncol);
-            if (c == HORSE || c == ChessBoard::INVALID_AT) break;
-            if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_bishop(g, nrow, ncol));
-            }
-        }
-
-        // DIAG DOWN LEFT
-        for (int i = 1;; i++) {
-            nrow = row - i;
-            ncol = col - i;
-            c = g.at(nrow, ncol);
-            if (c == HORSE || c == ChessBoard::INVALID_AT) break;
-            if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_bishop(g, nrow, ncol));
-            }
-        }
 
         // DIAG UP RIGHT
         for (int i = 1;; i++) {
-            nrow = row + i;
-            ncol = col + i;
-            c = g.at(nrow, ncol);
-            if (c == HORSE || c == ChessBoard::INVALID_AT) break;
-            if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_bishop(g, nrow, ncol));
-            }
+            if (!NextMove::add_bishop_if_possible(row - i, col + i, g, moves)) break;
         }
 
         // DIAG UP LEFT
         for (int i = 1;; i++) {
-            nrow = row + i;
-            ncol = col - i;
-            c = g.at(nrow, ncol);
-            if (c == HORSE || c == ChessBoard::INVALID_AT) break;
-            if (c == EMPTY || c == PAWN) {
-                moves.emplace_back(nrow, ncol, EvalPosition::for_bishop(g, nrow, ncol));
-            }
+            if (!NextMove::add_bishop_if_possible(row - i, col - i, g, moves)) break;
+        }
+
+        // DIAG DOWN RIGHT
+        for (int i = 1;; i++) {
+            if (!NextMove::add_bishop_if_possible(row + i, col + i, g, moves)) break;
+        }
+
+        // DIAG DOWN LEFT
+        for (int i = 1;; i++) {
+            if (!NextMove::add_bishop_if_possible(row + i, col - i, g, moves)) break;
         }
 
         sort(moves.begin(), moves.end(), NextPossibleMoves::NextMove::comparator());
         return moves;
     };
+
 };
 
 void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counter) {
