@@ -318,10 +318,14 @@ public:
 
 void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counter) {
     counter++;
-    if (depth >= best || depth > g.getMaxDepth()) return;
+    if (
+            depth + g.getPawnCnt() >= best || // solution with lower cost already exists
+            depth + g.getPawnCnt() >= g.getMaxDepth() // max depth would be reached if each play would remove figure
+            )
+        return;
     if (g.getPawnCnt() == 0) {
         best = depth;
-        cout << "Currect best: " << best << endl;
+        cout << "Update best with: " << best << endl;
         return;
     }
 
