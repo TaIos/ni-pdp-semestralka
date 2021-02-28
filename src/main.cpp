@@ -209,6 +209,21 @@ public:
 };
 
 class NextPossibleMoves {
+private:
+
+    // relative mapping for all possible horse movements
+    // [ROW, COL]
+    constexpr static int horse_cand[8][2] = {
+            {2,  1},
+            {2,  1},
+            {-2, 1},
+            {2,  -1},
+
+            {1,  2},
+            {1,  -2},
+            {-1, 2},
+            {-1, -2},
+    };
 public:
     struct NextMove {
         int row;
@@ -229,26 +244,13 @@ public:
     static vector<NextMove> for_horse(const ChessBoard &g) {
         int row = g.getHorse().getRow();
         int col = g.getHorse().getCol();
-
-        int cand[8][2] = {
-                {row + 2, col + 1},
-                {row + 2, col - 1},
-                {row - 2, col + 1},
-                {row - 2, col - 1},
-
-                {row + 1, col + 2},
-                {row + 1, col - 2},
-                {row - 1, col + 2},
-                {row - 1, col - 2},
-        };
-
         char c;
         int nrow, ncol;
         vector<NextMove> moves = vector<NextMove>();
         moves.reserve(8);
-        for (const auto &i : cand) {
-            nrow = i[0];
-            ncol = i[1];
+        for (int i = 0; i < 8; i++) {
+            nrow = horse_cand[i][0] + row;
+            ncol = horse_cand[i][1] + col;
             c = g.at(nrow, ncol);
             if (c == EMPTY || c == PAWN) {
                 moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
