@@ -168,6 +168,17 @@ class EvalPosition {
 public:
     static int for_horse(const ChessBoard &g, int row, int col) {
         if (g.at(row, col) == PAWN) return 2;
+        if ( // look if there is pawn nearby
+                g.at(row + 1, col) == PAWN ||
+                g.at(row - 1, col) == PAWN ||
+                g.at(row, col + 1) == PAWN ||
+                g.at(row, col - 1) == PAWN ||
+                g.at(row + 1, col - 1) == PAWN ||
+                g.at(row + 1, col + 1) == PAWN ||
+                g.at(row - 1, col - 1) == PAWN ||
+                g.at(row - 1, col + 1) == PAWN
+                )
+            return 1;
         return 0;
     };
 
@@ -210,10 +221,9 @@ public:
 
 class NextPossibleMoves {
 private:
-
     // relative mapping for all possible horse movements
     // [ROW, COL]
-    constexpr static int horse_cand[8][2] = {
+    constexpr const static int horse_cand[8][2] = {
             {2,  1},
             {2,  1},
             {-2, 1},
@@ -224,6 +234,7 @@ private:
             {-1, 2},
             {-1, -2},
     };
+
 public:
     struct NextMove {
         int row;
@@ -248,9 +259,9 @@ public:
         int nrow, ncol;
         vector<NextMove> moves = vector<NextMove>();
         moves.reserve(8);
-        for (int i = 0; i < 8; i++) {
-            nrow = horse_cand[i][0] + row;
-            ncol = horse_cand[i][1] + col;
+        for (const auto &cand : NextPossibleMoves::horse_cand) {
+            nrow = cand[0] + row;
+            ncol = cand[1] + col;
             c = g.at(nrow, ncol);
             if (c == EMPTY || c == PAWN) {
                 moves.emplace_back(nrow, ncol, EvalPosition::for_horse(g, nrow, ncol));
