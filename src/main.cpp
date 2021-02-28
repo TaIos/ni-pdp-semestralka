@@ -224,15 +224,17 @@ private:
     // relative mapping for all possible horse movements
     // [ROW, COL]
     constexpr const static int horse_cand[8][2] = {
-            {2,  1},
-            {2,  1},
+            {-2, -1},
             {-2, 1},
+
+            {-1, 2},
+            {1,  2},
+
+            {2,  1},
             {2,  -1},
 
-            {1,  2},
             {1,  -2},
-            {-1, 2},
-            {-1, -2},
+            {-1, -2}
     };
 
 public:
@@ -332,7 +334,7 @@ public:
 void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counter) {
     if (
             depth + g.getPawnCnt() >= best || // solution with lower cost already exists
-            depth + g.getPawnCnt() >= g.getMaxDepth() // max depth would be reached if each play would remove figure
+            depth + g.getPawnCnt() > g.getMaxDepth() // max depth would be reached if each play would remove figure
             )
         return;
     if (g.getPawnCnt() == 0) {
