@@ -3,7 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <limits>
-#include <algorithm>
+#include <chrono>
 
 // chess pieces
 #define HORSE  'J'
@@ -178,7 +178,7 @@ public:
 //                g.at(row - 1, col - 1) == PAWN ||
 //                g.at(row - 1, col + 1) == PAWN
 //                )
-            return 1;
+        return 1;
         return 0;
     };
 
@@ -337,7 +337,6 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counte
         return;
     if (g.getPawnCnt() == 0) {
         best = depth;
-        cout << "Update best with: " << best << endl;
         return;
     }
     counter++;
@@ -365,11 +364,13 @@ int main(int argc, char **argv) {
         long counter = 0;
 
         ChessBoard board = ChessBoard(filename);
-        cout << board;
+        auto start = chrono::high_resolution_clock::now();
         bb_dfs(board, 0, BISHOP, best, counter);
+        auto stop = chrono::high_resolution_clock::now();
 
-        cout << "Cena: " << best << endl;
-        cout << "Počet volání: " << counter << endl;
+        // Cena | Počet volání | Čas [ms]
+        cout << best << " " << counter << " "
+             << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << endl;
     }
 
 
