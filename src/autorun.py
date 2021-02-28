@@ -13,13 +13,14 @@ def run(command, line, **kwargs):
                         stderr=subprocess.PIPE,
                         universal_newlines=True,
                         **kwargs)
-    print(cp.stderr)
-    print("======")
-    print(cp.stdout)
+    return list(map(int, cp.stdout.strip().split()))
 
 
 paths = Path('../data').glob('**/*.txt')
+out = Path('./out')
+
 for path in paths:
-    print(path)
-    run(command='./run.out', line=str(path))
+    r = run(command='./run.out', line=path)
+    r.append(path.name)
+    print(r)
     break
