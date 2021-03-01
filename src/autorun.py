@@ -22,7 +22,14 @@ class Task:
                             stderr=subprocess.PIPE,
                             universal_newlines=True,
                             **kwargs)
-        self.result = list(map(int, cp.stdout.strip().split()))
+
+        it = iter(cp.stdout.split('\n'))
+        for line in it:
+            if "Cena" in line:
+                r = next(it)
+                break
+
+        self.result = list(map(int, r.strip().split()))
         print(self)
         self._check_result()
 
