@@ -23,6 +23,8 @@ private:
     // PDD specific
     int max_depth;
 
+    vector<string> move_log;
+
     void setAt(int row, int col, char value) {
         grid[row * row_len + col] = value;
     }
@@ -63,8 +65,14 @@ private:
     ChessPiece bishop;
     ChessPiece horse;
 
+    void logMovePiece(int row, int col) {
+        string msg = to_string(row) + "," + to_string(col);
+        if (at(row, col) == PAWN) msg += " *";
+        move_log.emplace_back(msg);
+    }
 
     void movePiece(ChessPiece &p, int row, int col) {
+        logMovePiece(row, col);
         if (at(row, col) == PAWN) pawn_cnt--;
         setAt(row, col, p.getType());
         setAt(p.getRow(), p.getCol(), EMPTY);
@@ -111,7 +119,20 @@ public:
         horse = oth.horse;
         pawn_cnt = oth.pawn_cnt;
         max_depth = oth.max_depth;
+        move_log = oth.move_log;
     };
+
+    ChessBoard &operator=(const ChessBoard &oth) {
+        memcpy(grid, oth.grid, oth.size);
+        size = oth.size;
+        row_len = oth.row_len;
+        bishop = oth.bishop;
+        horse = oth.horse;
+        pawn_cnt = oth.pawn_cnt;
+        max_depth = oth.max_depth;
+        move_log = oth.move_log;
+        return *this;
+    }
 
     ~ChessBoard() {
         delete[] grid;
@@ -148,6 +169,10 @@ public:
 
     int getRowLen() const {
         return row_len;
+    }
+
+    const vector<string> &getMoveLog() const {
+        return move_log;
     }
 
     friend ostream &operator<<(ostream &os, const ChessBoard &g) {
@@ -314,7 +339,7 @@ public:
 
 };
 
-void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counter) {
+void bb_dfs(const ChessBoard &g, long depth, char play, long &best, ChessBoard &bestBoard, long &counter) {
     if (
             depth + g.getPawnCnt() >= best || // solution with lower cost already exists
             depth + g.getPawnCnt() > g.getMaxDepth() // max depth would be reached if each play would remove figure
@@ -322,6 +347,7 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counte
         return;
     if (g.getPawnCnt() == 0) {
         best = depth;
+        bestBoard = ChessBoard(g);
         return;
     }
     counter++;
@@ -330,13 +356,13 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, long &counte
         for (const auto &m : NextPossibleMoves::for_horse(g)) {
             ChessBoard cpy = ChessBoard(g);
             cpy.moveHorse(m.row, m.col);
-            bb_dfs(cpy, depth + 1, BISHOP, best, counter);
+            bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
         }
     } else if (play == BISHOP) {
         for (const auto &m : NextPossibleMoves::for_bishop(g)) {
             ChessBoard cpy = ChessBoard(g);
             cpy.moveBishop(m.row, m.col);
-            bb_dfs(cpy, depth + 1, HORSE, best, counter);
+            bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
         }
     }
 }
@@ -351,12 +377,18 @@ int main(int argc, char **argv) {
         ChessBoard board = ChessBoard(filename);
         cout << board << endl;
         auto start = chrono::high_resolution_clock::now();
-        bb_dfs(board, 0, BISHOP, best, counter);
+        bb_dfs(board, 0, BISHOP, best, board, counter);
         auto stop = chrono::high_resolution_clock::now();
 
-        cout << "Cena | Počet volání | Čas [ms]" << endl;
-        cout << best << " " << counter << " "
-             << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << endl;
+        cout << "Cena\tPočet volání\tČas [ms]" << endl;
+        cout << best << "\t" << counter << "\t\t"
+             << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << endl << endl;
+
+        cout << "Tahy" << endl;
+        for (const auto &move : board.getMoveLog()) {
+            cout << move << endl;
+        }
+
     }
 
 
