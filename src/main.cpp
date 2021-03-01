@@ -354,13 +354,13 @@ void bb_dfs(const ChessBoard &g, long depth, char play, long &best, ChessBoard &
 
     if (play == HORSE) {
         for (const auto &m : NextPossibleMoves::for_horse(g)) {
-            ChessBoard cpy = ChessBoard(g);
+            ChessBoard cpy = g;
             cpy.moveHorse(m.row, m.col);
             bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
         }
     } else if (play == BISHOP) {
         for (const auto &m : NextPossibleMoves::for_bishop(g)) {
-            ChessBoard cpy = ChessBoard(g);
+            ChessBoard cpy = g;
             cpy.moveBishop(m.row, m.col);
             bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
         }
@@ -372,12 +372,13 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         string filename = argv[i];
         long best = numeric_limits<long>::max();
+        ChessBoard bestBoard = ChessBoard(filename);
         long counter = 0;
 
         ChessBoard board = ChessBoard(filename);
         cout << board << endl;
         auto start = chrono::high_resolution_clock::now();
-        bb_dfs(board, 0, BISHOP, best, board, counter);
+        bb_dfs(board, 0, BISHOP, best, bestBoard, counter);
         auto stop = chrono::high_resolution_clock::now();
 
         cout << "Cena\tPočet volání\tČas [ms]" << endl;
@@ -385,7 +386,7 @@ int main(int argc, char **argv) {
              << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << endl << endl;
 
         cout << "Tahy" << endl;
-        for (const auto &move : board.getMoveLog()) {
+        for (const auto &move : bestBoard.getMoveLog()) {
             cout << move << endl;
         }
 
