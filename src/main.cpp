@@ -4,6 +4,7 @@
 #include <vector>
 #include <limits>
 #include <chrono>
+#include <algorithm>
 
 // chess pieces
 #define HORSE  'J'
@@ -41,11 +42,27 @@ private:
     // PDP hint heuristic
     int max_depth;
 
-    vector<string> move_log;
 
     void setAt(int row, int col, char value) {
         grid[row * row_len + col] = value;
     }
+
+    class ChessMove {
+    private:
+        int row;
+        int col;
+        bool tookPawn;
+    public:
+        ChessMove(int row, int col, bool tookPawn) : row(row), col(col), tookPawn(tookPawn) {}
+
+
+        friend ostream &operator<<(ostream &os, const ChessMove &m) {
+            os << m.row << "," << m.col;
+            if (m.tookPawn) os << " *";
+            return os;
+        }
+
+    };
 
     class ChessPiece {
     private:
@@ -82,11 +99,11 @@ private:
 
     ChessPiece bishop;
     ChessPiece horse;
+    vector<ChessMove> move_log;
 
     void logMovePiece(int row, int col) {
-        string msg = to_string(row) + "," + to_string(col);
-        if (at(row, col) == PAWN) msg += " *";
-        move_log.emplace_back(msg);
+        bool tookPawn = at(row, col) == PAWN;
+        move_log.emplace_back(ChessMove(row, col, tookPawn));
     }
 
     void movePiece(ChessPiece &p, int row, int col) {
@@ -190,12 +207,13 @@ public:
         return row_len;
     }
 
-    const vector<string> &getMoveLog() const {
+    const vector<ChessMove> &getMoveLog() const {
         return move_log;
     }
 
     friend ostream &operator<<(ostream &os, const ChessBoard &g) {
-        os << "Délka strany šachovnice: " << g.row_len << ", maximální hloubka: " << g.max_depth << endl;
+        os << "Délka strany šachovnice: " << g.row_len << endl;
+        os << "minimální hloubka: " << g.min_depth << ", maximální hloubka: " << g.max_depth << endl;
         os << "Kůň na (" << g.horse.getRow() << "," << g.horse.getCol() << ")" << endl;
         os << "Střelec na (" << g.bishop.getRow() << "," << g.bishop.getCol() << ")" << endl;
         os << "Počet pěšáků " << g.pawn_cnt << endl;
