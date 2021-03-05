@@ -19,8 +19,9 @@ private:
     int size;
     int row_len;
     int pawn_cnt;
+    int min_depth;
 
-    // PDD specific
+    // PDP hint heuristic
     int max_depth;
 
     vector<string> move_log;
@@ -108,6 +109,7 @@ public:
             }
         }
         ifs.close();
+        min_depth = pawn_cnt;
     };
 
     ChessBoard(const ChessBoard &oth) {
@@ -187,6 +189,10 @@ public:
         }
         return os;
     }
+
+    int getMinDepth() const {
+        return min_depth;
+    }
 };
 
 class EvalPosition {
@@ -230,6 +236,7 @@ public:
 
         return 0;
     }
+
 
 };
 
@@ -342,7 +349,8 @@ public:
 void bb_dfs(const ChessBoard &g, long depth, char play, long &best, ChessBoard &bestBoard, long &counter) {
     if (
             depth + g.getPawnCnt() >= best || // solution with lower cost already exists
-            depth + g.getPawnCnt() > g.getMaxDepth() // max depth would be reached if each play would remove figure
+            depth + g.getPawnCnt() > g.getMaxDepth() || // max depth would be reached if each play would remove figure
+            best == g.getMinDepth() // optimum was reached
             )
         return;
     if (g.getPawnCnt() == 0) {
