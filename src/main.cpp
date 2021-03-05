@@ -11,6 +11,23 @@
 #define PAWN 'P'
 #define EMPTY '-'
 
+
+// relative mapping for all possible horse movements
+// [ROW, COL]
+const int HORSE_CAND[8][2] = {
+        {-2, -1},
+        {-2, 1},
+
+        {-1, 2},
+        {1,  2},
+
+        {2,  1},
+        {2,  -1},
+
+        {1,  -2},
+        {-1, -2}
+};
+
 using namespace std;
 
 class ChessBoard {
@@ -198,7 +215,16 @@ public:
 class EvalPosition {
 public:
     static int for_horse(const ChessBoard &g, int row, int col) {
-        if (g.at(row, col) == PAWN) return 2;
+        // take pawn
+        if (g.at(row, col) == PAWN) return 3;
+
+        // take pawn next move
+        for (const auto &cand : HORSE_CAND) {
+            if (g.at(row + cand[0], col + cand[1]) == PAWN)
+                return 2;
+        }
+
+        // one square away from pawn
         if (
                 g.at(row + 1, col + 1) == PAWN ||
                 g.at(row + 1, col - 1) == PAWN ||
@@ -210,6 +236,7 @@ public:
                 g.at(row, col - 1) == PAWN
                 )
             return 1;
+
         return 0;
     };
 
@@ -252,24 +279,8 @@ public:
 };
 
 class NextPossibleMoves {
-private:
-    // relative mapping for all possible horse movements
-    // [ROW, COL]
-    constexpr const static int horse_cand[8][2] = {
-            {-2, -1},
-            {-2, 1},
-
-            {-1, 2},
-            {1,  2},
-
-            {2,  1},
-            {2,  -1},
-
-            {1,  -2},
-            {-1, -2}
-    };
-
 public:
+
     struct NextMove {
         int row;
         int col;
@@ -317,7 +328,7 @@ public:
         int col = g.getHorse().getCol();
         vector<NextMove> moves = vector<NextMove>();
         moves.reserve(8);
-        for (const auto &cand : NextPossibleMoves::horse_cand) {
+        for (const auto &cand : HORSE_CAND) {
             NextMove::add_horse_if_possible(cand[0] + row, cand[1] + col, g, moves);
         }
 
