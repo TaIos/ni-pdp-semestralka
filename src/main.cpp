@@ -5,6 +5,7 @@
 #include <limits>
 #include <chrono>
 #include <algorithm>
+#include <omp.h>
 
 // chess pieces
 #define HORSE  'J'
@@ -388,7 +389,7 @@ public:
 
 };
 
-void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard &bestBoard, long &counter) {
+void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBoard, long &counter) {
     if (
             depth + g->getPawnCnt() >= best || // solution with lower cost already exists
             depth + g->getPawnCnt() > g->getMaxDepth() || // max depth would be reached if each play would remove figure
@@ -399,7 +400,7 @@ void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard &bestBo
     }
     if (g->getPawnCnt() == 0) {
         best = depth;
-        bestBoard = *g;
+        *bestBoard = *g;
         delete g;
         return;
     }
@@ -409,12 +410,14 @@ void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard &bestBo
         for (const auto &m : NextPossibleMoves::for_horse(*g)) {
             ChessBoard *cpy = new ChessBoard(*g);
             cpy->moveHorse(m.row, m.col);
+#pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter)
             bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
         }
     } else if (play == BISHOP) {
         for (const auto &m : NextPossibleMoves::for_bishop(*g)) {
             ChessBoard *cpy = new ChessBoard(*g);
             cpy->moveBishop(m.row, m.col);
+#pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter)
             bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
         }
     }
@@ -431,7 +434,11 @@ int main(int argc, char **argv) {
 
         cout << bestBoard << endl;
         auto start = chrono::high_resolution_clock::now();
-        bb_dfs(new ChessBoard(filename), 0, BISHOP, best, bestBoard, counter);
+#pragma  omp  parallel firstprivate(filename) shared(best, bestBoard, counter)
+        {
+#pragma  omp  single
+            bb_dfs(new ChessBoard(filename), 0, BISHOP, best, &bestBoard, counter);
+        }
         auto stop = chrono::high_resolution_clock::now();
 
         cout << "Cena\tPočet volání\tČas [ms]" << endl;
