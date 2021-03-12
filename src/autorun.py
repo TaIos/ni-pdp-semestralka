@@ -70,10 +70,12 @@ class Task:
         return self.filename + ' ' + ' '.join(str(x) for x in self.result)
 
 
+pcmd = Path('../cmake-build-openmp/semestralka')
+
 tasks = []
 paths = Path('../data').glob('**/*.txt')
 for path in paths:
-    tasks.append(Task(command='./run.out', line=path, filename=path.stem))
+    tasks.append(Task(command=pcmd, line=path, filename=path.stem))
 
 threads = []
 for task in tasks:
