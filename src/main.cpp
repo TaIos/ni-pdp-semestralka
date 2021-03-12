@@ -429,10 +429,9 @@ int main(int argc, char **argv) {
         ChessBoard bestBoard = ChessBoard(filename);
         long counter = 0;
 
-        ChessBoard *board = new ChessBoard(filename);
-        cout << *board << endl;
+        cout << bestBoard << endl;
         auto start = chrono::high_resolution_clock::now();
-        bb_dfs(board, 0, BISHOP, best, bestBoard, counter);
+        bb_dfs(new ChessBoard(filename), 0, BISHOP, best, bestBoard, counter);
         auto stop = chrono::high_resolution_clock::now();
 
         cout << "Cena\tPočet volání\tČas [ms]" << endl;
