@@ -154,6 +154,7 @@ public:
         bishop = oth.bishop;
         horse = oth.horse;
         pawn_cnt = oth.pawn_cnt;
+        min_depth = oth.min_depth;
         max_depth = oth.max_depth;
         move_log = oth.move_log;
     };
@@ -165,6 +166,7 @@ public:
         bishop = oth.bishop;
         horse = oth.horse;
         pawn_cnt = oth.pawn_cnt;
+        min_depth = oth.min_depth;
         max_depth = oth.max_depth;
         move_log = oth.move_log;
         return *this;
@@ -386,33 +388,37 @@ public:
 
 };
 
-void bb_dfs(const ChessBoard &g, long depth, char play, long &best, ChessBoard &bestBoard, long &counter) {
+void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard &bestBoard, long &counter) {
     if (
-            depth + g.getPawnCnt() >= best || // solution with lower cost already exists
-            depth + g.getPawnCnt() > g.getMaxDepth() || // max depth would be reached if each play would remove figure
-            best == g.getMinDepth() // optimum was reached
-            )
+            depth + g->getPawnCnt() >= best || // solution with lower cost already exists
+            depth + g->getPawnCnt() > g->getMaxDepth() || // max depth would be reached if each play would remove figure
+            best == g->getMinDepth() // optimum was reached
+            ) {
+        delete g;
         return;
-    if (g.getPawnCnt() == 0) {
+    }
+    if (g->getPawnCnt() == 0) {
         best = depth;
-        bestBoard = ChessBoard(g);
+        bestBoard = *g;
+        delete g;
         return;
     }
     counter++;
 
     if (play == HORSE) {
-        for (const auto &m : NextPossibleMoves::for_horse(g)) {
-            ChessBoard cpy = g;
-            cpy.moveHorse(m.row, m.col);
+        for (const auto &m : NextPossibleMoves::for_horse(*g)) {
+            ChessBoard *cpy = new ChessBoard(*g);
+            cpy->moveHorse(m.row, m.col);
             bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
         }
     } else if (play == BISHOP) {
-        for (const auto &m : NextPossibleMoves::for_bishop(g)) {
-            ChessBoard cpy = g;
-            cpy.moveBishop(m.row, m.col);
+        for (const auto &m : NextPossibleMoves::for_bishop(*g)) {
+            ChessBoard *cpy = new ChessBoard(*g);
+            cpy->moveBishop(m.row, m.col);
             bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
         }
     }
+    delete g;
 }
 
 int main(int argc, char **argv) {
@@ -423,8 +429,8 @@ int main(int argc, char **argv) {
         ChessBoard bestBoard = ChessBoard(filename);
         long counter = 0;
 
-        ChessBoard board = ChessBoard(filename);
-        cout << board << endl;
+        ChessBoard *board = new ChessBoard(filename);
+        cout << *board << endl;
         auto start = chrono::high_resolution_clock::now();
         bb_dfs(board, 0, BISHOP, best, bestBoard, counter);
         auto stop = chrono::high_resolution_clock::now();
