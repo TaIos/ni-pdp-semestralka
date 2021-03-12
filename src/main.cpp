@@ -389,39 +389,43 @@ public:
 
 };
 
-void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBoard, long &counter) {
-    if (
+// return true if there is better board available
+bool betterBoardExists(long depth, long best, ChessBoard *g) {
+    return
             depth + g->getPawnCnt() >= best || // solution with lower cost already exists
             depth + g->getPawnCnt() > g->getMaxDepth() || // max depth would be reached if each play would remove figure
-            best == g->getMinDepth() // optimum was reached
-            ) {
-        delete g;
-        return;
-    }
-    if (g->getPawnCnt() == 0) {
-        best = depth;
-        *bestBoard = *g;
-        delete g;
-        return;
-    }
-    counter++;
+            best == g->getMinDepth(); // optimum was reached
+}
 
-    if (play == HORSE) {
-        for (const auto &m : NextPossibleMoves::for_horse(*g)) {
-            ChessBoard *cpy = new ChessBoard(*g);
-            cpy->moveHorse(m.row, m.col);
+void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBoard, long &counter) {
+    if (!betterBoardExists(depth, best, g)) {
+        if (g->getPawnCnt() == 0) {
+#pragma omp critical
+            {
+                if (!betterBoardExists(depth, best, g)) {
+                    best = depth;
+                    *bestBoard = *g;
+                }
+            }
+        } else if (play == HORSE) {
+            for (const auto &m : NextPossibleMoves::for_horse(*g)) {
+                ChessBoard *cpy = new ChessBoard(*g);
+                cpy->moveHorse(m.row, m.col);
 #pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter)
-            bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
-        }
-    } else if (play == BISHOP) {
-        for (const auto &m : NextPossibleMoves::for_bishop(*g)) {
-            ChessBoard *cpy = new ChessBoard(*g);
-            cpy->moveBishop(m.row, m.col);
+                bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
+            }
+        } else if (play == BISHOP) {
+            for (const auto &m : NextPossibleMoves::for_bishop(*g)) {
+                ChessBoard *cpy = new ChessBoard(*g);
+                cpy->moveBishop(m.row, m.col);
 #pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter)
-            bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
+                bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
+            }
         }
     }
     delete g;
+#pragma omp atomic update
+    counter++;
 }
 
 int main(int argc, char **argv) {
@@ -451,7 +455,5 @@ int main(int argc, char **argv) {
         }
 
     }
-
-
     return 0;
 }
