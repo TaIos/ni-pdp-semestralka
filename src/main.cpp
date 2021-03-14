@@ -411,14 +411,14 @@ void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBo
             for (const auto &m : NextPossibleMoves::for_horse(*g)) {
                 ChessBoard *cpy = new ChessBoard(*g);
                 cpy->moveHorse(m.row, m.col);
-#pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter)
+#pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter) default(none)
                 bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
             }
         } else if (play == BISHOP) {
             for (const auto &m : NextPossibleMoves::for_bishop(*g)) {
                 ChessBoard *cpy = new ChessBoard(*g);
                 cpy->moveBishop(m.row, m.col);
-#pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter)
+#pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter) default(none)
                 bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
             }
         }
@@ -438,7 +438,7 @@ int main(int argc, char **argv) {
 
         cout << bestBoard << endl;
         auto start = chrono::high_resolution_clock::now();
-#pragma  omp  parallel firstprivate(filename) shared(best, bestBoard, counter)
+#pragma  omp  parallel firstprivate(filename) shared(best, bestBoard, counter) default(none)
         {
 #pragma  omp  single
             bb_dfs(new ChessBoard(filename), 0, BISHOP, best, &bestBoard, counter);
