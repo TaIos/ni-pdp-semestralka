@@ -1,98 +1,30 @@
-# Semestrálka z NI-PDD
+# Semestral work from NI-PDD
 
 * [courses](https://courses.fit.cvut.cz/NI-PDP/)
 
-## Měření výkonnosti
+## Performace
 
-### Sekvenční řešení [notebook]
+| File  | Cost | Ref seq [s] | HW1 seq [s] | HW1 task [s] | Ref seq [call] | HW1 seq [call] | HW1 task [call] |
+|-------|------|-------------|-------------|--------------|----------------|----------------|-----------------|
+| saj1  | 5    | 0           | 0           | 0            | 750            | 10             | 1e+3            |
+| saj2  | 14   | 0.6         | 1.9         | 0.6          | 14e+6          | 2e+6           | 14e+6           |
+| saj3  | 12   | 0.01        | 0           | 0            | 300e+3         | 12e+3          | 1e+5            |
+| saj4  | 14   | 0.4         | 1           | 0.3          | 8e+6           | 1e+6           | 7e+6            |
+| saj5  | 12   | 12          | 28.2        | 0.5          | 193e+6         | 23e+6          | 12e+6           |
+| saj6  | 16   | 31          | 529.1       | 1.3          | 502e+6         | 565e+6         | 24+e6           |
+| saj7  | 16   | 67          | 141         | 0            | 1.2e+9         | 133e+6         | 1e+6            |
+| saj8  | 20   | 1170        | 22750.8     | 323.8        | 19e+9          | 27e+9          | 8e+9            |
+| saj9  | 26   | 6.3         | 0.9         | 1.7          | 89e+6          | 6e+5           | 42e+6           |
+| saj10 | 20   | 36          | 61.9        | 21.6         | 460e+6         | 45e+6          | 462e+6          |
+| saj11 | 18   | 0.2         | 0.6         | 0.5          | 3e+6           | 4e+5           | 11e+6           |
+| saj12 | 22   | 72          | 249.2       | 109.2        | 1.2e+9         | 243e+6         | 2e+9            |
 
-| Soubor    | Čas [s] | Cena | Počet volání   |
-|-----------|---------|------|----------------|
-| saj1.txt  | 0       | 5    | 10             |
-| saj2.txt  | 1.9     | 14   | 2 690 561      |
-| saj3.txt  | 0       | 12   | 12 822         |
-| saj4.txt  | 1       | 14   | 1 550 605      |
-| saj5.txt  | 28.2    | 12   | 23 176 549     |
-| saj6.txt  | 529.1   | 16   | 565 523 051    |
-| saj7.txt  | 141     | 16   | 133 923 075    |
-| saj8.txt  | 22750.8 | 20   | 27 443 340 794 |
-| saj9.tx   | 0.9     | 26   | 654 089        |
-| saj10.txt | 61.9    | 20   | 45 402 144     |
-| saj11.txt | 0.6     | 18   | 473 844        |
-| saj12.txt | 249.2   | 22   | 243 181 271    |
+### Hardware
 
-* procesor AMD Ryzen 7 PRO 4750U, 8 physical 16 virtual cores,1397.271 MHz
-* kompilováno ``g++ -Wall -pedantic -Wextra --std=c++11 -O3 -funroll-loops -o run.out``
+#### HW1
+*  AMD Ryzen 7 PRO 4750U, 8 physical 16 virtual cores,1397.271 MHz
+* compile with ``g++ (GCC) 10.2.1 20201125 (Red Hat 10.2.1-9)``
+	* seq ``g++ --std=c++11 -O3 -funroll-loops``
+	* task: ``g++ -Wall --std=c++11 -O3 -funroll-loops -fopenmp `` 
 
-### Sekvenční řešení [STAR]
 
-### Taskový paralelismus [notebook]
-
-| Soubor    | Čas [s] | Cena | Počet volání  |
-|-----------|---------|------|---------------|
-| saj1.txt  | 0       | 5    | 1 298         |
-| saj2.txt  | 0.6     | 14   | 14 296 421    |
-| saj3.txt  | 0       | 12   | 99 645        |
-| saj4.txt  | 0.3     | 14   | 7 933 139     |
-| saj5.txt  | 0.5     | 12   | 12 354 598    |
-| saj6.txt  | 1.3     | 16   | 24 878 740    |
-| saj7.txt  | 0       | 16   | 1 120 215     |
-| saj8.txt  | 323.8   | 20   | 7 992 754 319 |
-| saj9.tx   | 1.7     | 26   | 42 199 937    |
-| saj10.txt | 21.6    | 20   | 462 731 436   |
-| saj11.txt | 0.5     | 18   | 11 517 097    |
-| saj12.txt | 109.2   | 22   | 2 599 289 591 |
-
-* procesor AMD Ryzen 7 PRO 4750U, 8 physical 16 virtual cores,1397.271 MHz
-* kompilováno ``g++ -Wall -pedantic -Wextra --std=c++11 -O3 -funroll-loops -fopenmp -o run.out`` 
-
-### Taskový paralelismus [STAR]
-
-| Soubor    | Čas [s] | Cena | Počet volání |
-|-----------|---------|------|--------------|
-| saj1.txt  |         |      |              |
-| saj2.txt  |         |      |              |
-| saj3.txt  |         |      |              |
-| saj4.txt  |         |      |              |
-| saj5.txt  |         |      |              |
-| saj6.txt  |         |      |              |
-| saj7.txt  |         |      |              |
-| saj8.txt  |         |      |              |
-| saj9.tx   |         |      |              |
-| saj10.txt |         |      |              |
-| saj11.txt |         |      |              |
-| saj12.txt |         |      |              |
-
-### Datový paralelismus [notebook]
-
-| Soubor    | Čas [s] | Cena | Počet volání |
-|-----------|---------|------|--------------|
-| saj1.txt  |         |      |              |
-| saj2.txt  |         |      |              |
-| saj3.txt  |         |      |              |
-| saj4.txt  |         |      |              |
-| saj5.txt  |         |      |              |
-| saj6.txt  |         |      |              |
-| saj7.txt  |         |      |              |
-| saj8.txt  |         |      |              |
-| saj9.tx   |         |      |              |
-| saj10.txt |         |      |              |
-| saj11.txt |         |      |              |
-| saj12.txt |         |      |              |
-
-### Datový paralelismus [STAR]
-
-| Soubor    | Čas [s] | Cena | Počet volání |
-|-----------|---------|------|--------------|
-| saj1.txt  |         |      |              |
-| saj2.txt  |         |      |              |
-| saj3.txt  |         |      |              |
-| saj4.txt  |         |      |              |
-| saj5.txt  |         |      |              |
-| saj6.txt  |         |      |              |
-| saj7.txt  |         |      |              |
-| saj8.txt  |         |      |              |
-| saj9.tx   |         |      |              |
-| saj10.txt |         |      |              |
-| saj11.txt |         |      |              |
-| saj12.txt |         |      |              |
