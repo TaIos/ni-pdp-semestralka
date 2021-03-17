@@ -13,6 +13,14 @@
 #define PAWN 'P'
 #define EMPTY '-'
 
+/*
+Empirical threshold.
+Tested on values from set {2, 3, 4, 5, 6, 99999}.
+Testing showed sweetspot is T=6.
+Tested on: AMD Ryzen 7 PRO 4750U, 8 physical 16 virtual cores,1397.271 MHz
+*/
+#define TASK_THRESHOLD 6
+
 
 // relative mapping for all possible horse movements
 // [ROW, COL]
@@ -411,15 +419,23 @@ void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBo
             for (const auto &m : NextPossibleMoves::for_horse(*g)) {
                 ChessBoard *cpy = new ChessBoard(*g);
                 cpy->moveHorse(m.row, m.col);
+                if (depth > TASK_THRESHOLD) {
+                    bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
+                } else {
 #pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter) default(none)
-                bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
+                    bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
+                }
             }
         } else if (play == BISHOP) {
             for (const auto &m : NextPossibleMoves::for_bishop(*g)) {
                 ChessBoard *cpy = new ChessBoard(*g);
                 cpy->moveBishop(m.row, m.col);
+                if (depth > TASK_THRESHOLD) {
+                    bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
+                } else {
 #pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter) default(none)
-                bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
+                    bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
+                }
             }
         }
     }
