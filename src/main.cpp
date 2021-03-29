@@ -13,14 +13,6 @@
 #define PAWN 'P'
 #define EMPTY '-'
 
-/*
-Empirical threshold.
-Tested on values from set {2, 3, 4, 5, 6, 99999}.
-Testing showed sweetspot is T=6.
-Tested on: AMD Ryzen 7 PRO 4750U, 8 physical 16 virtual cores,1397.271 MHz
-*/
-#define TASK_THRESHOLD 6
-
 
 // relative mapping for all possible horse movements
 // [ROW, COL]
@@ -397,6 +389,7 @@ public:
 
 };
 
+
 // return true if there is better board available
 bool betterBoardExists(long depth, long best, ChessBoard *g) {
     return
@@ -405,7 +398,7 @@ bool betterBoardExists(long depth, long best, ChessBoard *g) {
             best == g->getMinDepth(); // optimum was reached
 }
 
-void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBoard, long &counter) {
+void bb_dfs_seq(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBoard, long &counter) {
     if (!betterBoardExists(depth, best, g)) {
         if (g->getPawnCnt() == 0) {
 #pragma omp critical
@@ -419,29 +412,39 @@ void bb_dfs(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBo
             for (const auto &m : NextPossibleMoves::for_horse(*g)) {
                 ChessBoard *cpy = new ChessBoard(*g);
                 cpy->moveHorse(m.row, m.col);
-                if (depth > TASK_THRESHOLD) {
-                    bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
-                } else {
-#pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter) default(none)
-                    bb_dfs(cpy, depth + 1, BISHOP, best, bestBoard, counter);
-                }
+                bb_dfs_seq(cpy, depth + 1, BISHOP, best, bestBoard, counter);
             }
         } else if (play == BISHOP) {
             for (const auto &m : NextPossibleMoves::for_bishop(*g)) {
                 ChessBoard *cpy = new ChessBoard(*g);
                 cpy->moveBishop(m.row, m.col);
-                if (depth > TASK_THRESHOLD) {
-                    bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
-                } else {
-#pragma  omp  task firstprivate(cpy, depth) shared(best, bestBoard, counter) default(none)
-                    bb_dfs(cpy, depth + 1, HORSE, best, bestBoard, counter);
-                }
+                bb_dfs_seq(cpy, depth + 1, HORSE, best, bestBoard, counter);
             }
         }
     }
     delete g;
 #pragma omp atomic update
     counter++;
+}
+
+struct Task {
+    ChessBoard *board;
+    char play;
+    int depth;
+};
+
+vector<Task> generateInstances(ChessBoard *g, int depth, char play) {
+    vector<Task> res = vector<Task>();
+    delete g;
+    return res;
+}
+
+void bb_dfs_task_par(ChessBoard *g, long &best, ChessBoard *bestBoard, long &counter) {
+    vector<Task> dlst = generateInstances(g, 0, BISHOP);
+#pragma omp parallel for shared(best, bestBoard, counter, dlst) schedule(dynamic) default(none)
+    for (unsigned long i = 0; i < dlst.size(); i++) {
+        bb_dfs_seq(dlst[i].board, dlst[i].depth, dlst[i].play, best, bestBoard, counter);
+    }
 }
 
 int main(int argc, char **argv) {
@@ -454,11 +457,7 @@ int main(int argc, char **argv) {
 
         cout << bestBoard << endl;
         auto start = chrono::high_resolution_clock::now();
-#pragma  omp  parallel firstprivate(filename) shared(best, bestBoard, counter) default(none)
-        {
-#pragma  omp  single
-            bb_dfs(new ChessBoard(filename), 0, BISHOP, best, &bestBoard, counter);
-        }
+        bb_dfs_task_par(new ChessBoard(filename), best, &bestBoard, counter);
         auto stop = chrono::high_resolution_clock::now();
 
         cout << "Cena\tPočet volání\tČas [ms]" << endl;
