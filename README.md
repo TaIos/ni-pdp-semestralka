@@ -55,7 +55,15 @@
 | saj10 | 32           | 48.3             | 25           | 30.5             | 19.4         | 27.6             | 42        | 41        | 41.9        | 45.1        |
 | saj12 | 211.7        | 313.6            | 110.6        | 100.9            | 106.2        | 206.2            | 218.7     | 210.3     | 226         | 224.5       |
 
-### Hardware
+
+### Number of generated instances for each epoch
+| File  | E=2 | E=3 | E=4  |
+|-------|-----|-----|------|
+| saj8  | 77  | 785 | 5904 |
+| saj10 | 42  | 683 | 4098 |
+| saj12 | 21  | 265 | 1584 |
+
+## Hardware
 
 #### HW1
 *  AMD Ryzen 7 PRO 4750U, 8 physical 16 virtual cores,1397.271 MHz
