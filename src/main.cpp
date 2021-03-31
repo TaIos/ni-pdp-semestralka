@@ -30,6 +30,8 @@ const int HORSE_CAND[8][2] = {
         {-1, -2}
 };
 
+#define EPOCH_CNT 3
+
 using namespace std;
 
 class ChessBoard {
@@ -427,23 +429,51 @@ void bb_dfs_seq(ChessBoard *g, long depth, char play, long &best, ChessBoard *be
     counter++;
 }
 
-struct Task {
+struct Instance {
     ChessBoard *board;
-    char play;
     int depth;
+    char play;
+
+    void freeMem() const {
+        delete board;
+    }
+
+    Instance(ChessBoard *board, int depth, char play) : board(board), depth(depth), play(play) {}
 };
 
-vector<Task> generateInstances(ChessBoard *g, int depth, char play) {
-    vector<Task> res = vector<Task>();
-    delete g;
-    return res;
+vector<Instance> generateInstances(ChessBoard *initBoard, int initDepth, char initPlay) {
+    vector<Instance> instances = vector<Instance>();
+    instances.emplace_back(initBoard, initDepth, initPlay);
+
+    for (int i = 0; i < EPOCH_CNT; i++) {
+        vector<Instance> instancesNext = vector<Instance>();
+        for (const auto &ins : instances) {
+            if (ins.play == HORSE) {
+                for (const auto &m : NextPossibleMoves::for_horse(*ins.board)) {
+                    ChessBoard *cpy = new ChessBoard(*ins.board);
+                    cpy->moveHorse(m.row, m.col);
+                    instancesNext.emplace_back(cpy, ins.depth + 1, BISHOP);
+                }
+            } else if (ins.play == BISHOP) {
+                for (const auto &m : NextPossibleMoves::for_bishop(*ins.board)) {
+                    ChessBoard *cpy = new ChessBoard(*ins.board);
+                    cpy->moveBishop(m.row, m.col);
+                    instancesNext.emplace_back(cpy, ins.depth + 1, HORSE);
+                }
+            }
+            ins.freeMem();
+        }
+        instances = instancesNext;
+    }
+    cout << "Vygenerováno " << instances.size() << " instancí pro počet epoch " << EPOCH_CNT << "." << endl << endl;
+    return instances;
 }
 
-void bb_dfs_task_par(ChessBoard *g, long &best, ChessBoard *bestBoard, long &counter) {
-    vector<Task> dlst = generateInstances(g, 0, BISHOP);
-#pragma omp parallel for shared(best, bestBoard, counter, dlst) schedule(dynamic) default(none)
-    for (unsigned long i = 0; i < dlst.size(); i++) {
-        bb_dfs_seq(dlst[i].board, dlst[i].depth, dlst[i].play, best, bestBoard, counter);
+void bb_dfs_data_par(ChessBoard *g, long &best, ChessBoard *bestBoard, long &counter) {
+    vector<Instance> instances = generateInstances(g, 0, BISHOP);
+#pragma omp parallel for shared(best, bestBoard, counter, instances) schedule(dynamic) default(none)
+    for (unsigned long i = 0; i < instances.size(); i++) {
+        bb_dfs_seq(instances[i].board, instances[i].depth, instances[i].play, best, bestBoard, counter);
     }
 }
 
@@ -457,7 +487,7 @@ int main(int argc, char **argv) {
 
         cout << bestBoard << endl;
         auto start = chrono::high_resolution_clock::now();
-        bb_dfs_task_par(new ChessBoard(filename), best, &bestBoard, counter);
+        bb_dfs_data_par(new ChessBoard(filename), best, &bestBoard, counter);
         auto stop = chrono::high_resolution_clock::now();
 
         cout << "Cena\tPočet volání\tČas [ms]" << endl;
