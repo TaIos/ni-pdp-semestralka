@@ -20,9 +20,14 @@
 | saj11 | 18   | 0.2         | 0.6         | 0.5          | 3e+6           | 4e+5           | 11e+6           |
 | saj12 | 22   | 72          | 249.2       | 109.2        | 1.2e+9         | 243e+6         | 2e+9            |
 
-## Task parallelism threshold
+## Task parallelism – threshold
 
-| File  | T=2, HW1 [s] | T=3, HW1 [s] | T=4, HW1 [s] | T=5, HW1 [s] | T=6, HW1 [s] | T=99999, HW1 [s] |
+* hardware used was HW1
+* measurements are in seconds
+* T is depth threshold, after which only sequential solving is used
+
+
+| File  | T=2 | T=3  | T=4 | T=5  | T=6  | T=99999 |
 |-------|--------------|--------------|--------------|--------------|--------------|------------------|
 | saj1  | 0            | 0            | 0            | 0            | 0            | 0                |
 | saj2  | 0.8          | 0.5          | 0.5          | 0.6          | 0.5          | 0.7              |
@@ -36,6 +41,19 @@
 | saj10 | 23.2         | 20.3         | 17.6         | 17.5         | 17.2         | 21.6             |
 | saj11 | 0.2          | 0.3          | 0.7          | 0.2          | 0.3          | 0.4              |
 | saj12 | 102.7        | 129.5        | 200          | 151.5        | 139.9        | 220              |
+
+
+## Data parallelism – scheduling
+
+* hardware used was HW1
+* measurements are in seconds
+* E is number of epochs in BFS
+
+| File  | dynamic, E=2 | dynamic(10), E=2 | dynamic, E=3 | dynamic(10), E=3 | dynamic, E=4 | dynamic(10), E=4 | auto, E=3 | auto, E=4 | guided, E=3 | guided, E=4 |
+|-------|--------------|------------------|--------------|------------------|--------------|------------------|-----------|-----------|-------------|-------------|
+| saj8  | 50.2         | 105.1            | 37.8         | 56.1             | 7475.6       | 37.8             | 69.2      | 138       | 70.4        | 111.2       |
+| saj10 | 32           | 48.3             | 25           | 30.5             | 19.4         | 27.6             | 42        | 41        | 41.9        | 45.1        |
+| saj12 | 211.7        | 313.6            | 110.6        | 100.9            | 106.2        | 206.2            | 218.7     | 210.3     | 226         | 224.5       |
 
 ### Hardware
 

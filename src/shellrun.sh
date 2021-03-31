@@ -1,15 +1,18 @@
 #!/usr/bin/bash
 
 PROGRAM='./run.out'
+OUT="out/parallel/data_epoch3_guided"
+
+mkdir "$OUT"
 
 for filename in ../data/*.txt; do
   base=$(basename -- "$filename")
   echo "$base"
 
   # sekvencni
-  #  $PROGRAM "$filename" >"out/sequence/$base" &
+  #  $PROGRAM "$filename" >"$OUT/$base" &
 
-  # datovy paralelismus
-  $PROGRAM "$filename" >"out/parallel/task/$base"
+  # paralelni
+  $PROGRAM "$filename" > "$OUT/$base"
 
 done
