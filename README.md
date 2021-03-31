@@ -27,7 +27,7 @@
 * T is depth threshold, after which only sequential solving is used
 
 
-| File  | T=2 | T=3  | T=4 | T=5  | T=6  | T=99999 |
+| File  | T=2 | T=3  | T=4 | T=5  | 🔥 T=6  | T=99999 |
 |-------|--------------|--------------|--------------|--------------|--------------|------------------|
 | saj1  | 0            | 0            | 0            | 0            | 0            | 0                |
 | saj2  | 0.8          | 0.5          | 0.5          | 0.6          | 0.5          | 0.7              |
@@ -49,7 +49,7 @@
 * measurements are in seconds
 * E is number of epochs in BFS
 
-| File  | dynamic, E=2 | dynamic(10), E=2 | dynamic, E=3 | dynamic(10), E=3 | dynamic, E=4 | dynamic(10), E=4 | auto, E=3 | auto, E=4 | guided, E=3 | guided, E=4 |
+| File  | dynamic, E=2 | dynamic(10), E=2 | 🔥 dynamic, E=3 | dynamic(10), E=3 | dynamic, E=4 | dynamic(10), E=4 | auto, E=3 | auto, E=4 | guided, E=3 | guided, E=4 |
 |-------|--------------|------------------|--------------|------------------|--------------|------------------|-----------|-----------|-------------|-------------|
 | saj8  | 50.2         | 105.1            | 37.8         | 56.1             | 7475.6       | 37.8             | 69.2      | 138       | 70.4        | 111.2       |
 | saj10 | 32           | 48.3             | 25           | 30.5             | 19.4         | 27.6             | 42        | 41        | 41.9        | 45.1        |
