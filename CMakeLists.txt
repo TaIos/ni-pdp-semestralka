@@ -7,12 +7,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 
 add_executable(semestralka src/main.cpp)
 
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(semestralka PUBLIC OpenMP::OpenMP_CXX)
-endif()
+find_package(OpenMP)
+target_link_libraries(semestralka PUBLIC OpenMP::OpenMP_CXX)
 
 set(MPIEXEC_EXECUTABLE /usr/lib64/openmpi/bin/mpicxx)
 enable_language(Fortran)
 find_package(MPI REQUIRED)
-message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
 target_link_libraries(semestralka PUBLIC MPI::MPI_CXX)
+
+message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
