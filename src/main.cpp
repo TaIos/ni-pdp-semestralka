@@ -18,9 +18,9 @@
  * MPI message TAGs
  */
 enum MessageTag {
-    DONE = 0, // work is done, #define result
-    WORK = 1, // work to be done, #d staring state
-    FINISHED = 2, // there is no more work to be #define
+    DONE = 0, // work is done
+    WORK = 1, // work to be done
+    FINISHED = 2, // there is no more work
     UPDATE = 3 // update on the bestPathLen solution found by slave on it's instance
 };
 
@@ -550,19 +550,22 @@ int main(int argc, char **argv) {
         int bestPathLen = numeric_limits<int>::max();
         vector<Instance *> insList = generateInstances(initBoard, 0, HORSE);
         size_t insHead = 0;
+        int runningSlaves = 0;
         int msgLen;
 
         // send initial work to each slave
         for (int i = 1; i < p && insHead < insList.size(); i++) {
-            insList[insHead++]->serializeToBuffer(&buf, bufLen, msgLen);
+            insList[insHead]->serializeToBuffer(&buf, bufLen, msgLen);
             MPI_Send(buf, msgLen, MPI_CHAR, p, MessageTag::WORK, MPI_COMM_WORLD);
+            runningSlaves++;
+            insHead++;
         }
 
         // check for finished work from slaves
         // send message to all slaves if best solution is updated
         int flag;
         MPI_Status status;
-        while (insHead < insList.size()) {
+        while (true) {
             MPI_Iprobe(MPI_ANY_SOURCE, MessageTag::DONE, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
                 // receive & deserialize board
@@ -582,6 +585,21 @@ int main(int argc, char **argv) {
                         }
                     }
                 }
+
+                // send next work
+                // or
+                // send finish flag if there is no more work
+                if (insHead < insList.size()) {
+                    insList[insHead]->serializeToBuffer(&buf, bufLen, msgLen);
+                    MPI_Send(buf, msgLen, MPI_CHAR, status.MPI_SOURCE, MessageTag::WORK, MPI_COMM_WORLD);
+                    insHead++;
+                } else {
+                    MPI_Send(&bestPathLen, 1, MPI_INT, status.MPI_SOURCE, MessageTag::FINISHED,
+                             MPI_COMM_WORLD);
+                    runningSlaves--;
+                }
+
+                if (runningSlaves == 0) break;
             }
         }
 
