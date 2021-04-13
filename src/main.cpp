@@ -45,6 +45,12 @@ const int HORSE_CAND[8][2] = {
 
 using namespace std;
 
+void ensureBufferSize(char **buf, int current, int needed) {
+    if (current >= needed) return;
+    delete[] *buf;
+    *buf = new char[needed];
+}
+
 class ChessBoard {
 private:
     char *grid = nullptr;
@@ -179,8 +185,8 @@ public:
      * @param n length of the result
      * @return result
      */
-    char *serialize(int &n) {
-        n = 10;
+    char *serialize(char *buffer, int bufsize, int &outsize) {
+        outsize = 10;
         return new char[10];
     }
 
@@ -191,7 +197,7 @@ public:
      * @param n array length
      * @return deserialized chessboard instance
      */
-    static ChessBoard *deserialize(char *data, int n) {
+    static ChessBoard deserialize(char *data, int n) {
         return nullptr;
     }
 
@@ -512,6 +518,8 @@ void bb_dfs_data_par(ChessBoard *g, long &best, ChessBoard *bestBoard, long &cou
 
 int main(int argc, char **argv) {
 
+    int bufLen = 1000;
+    char *buf = new char[bufLen];
     int my_rank;
     int p;
 
@@ -524,12 +532,19 @@ int main(int argc, char **argv) {
     /* find out number of processes */
     MPI_Comm_size(MPI_COMM_WORLD, &p);
 
-    cout << my_rank << "/" << p << endl;
-
     if (p == 0) { // master process
         string filename = argv[0];
         long bestGlobal = numeric_limits<long>::max();
-        ChessBoard startingBoard = ChessBoard(filename);
+        ChessBoard bestBoard = ChessBoard(filename);
+        vector<Instance> instances = generateInstances(new ChessBoard(filename), 0, HORSE);
+        vector<Instance>::iterator head = instances.begin();
+
+        // send initial work to each slave
+        for (int i = 1; i < p && head != instances.end(); i++, head++) {
+            MPI_Pack(&a, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
+            (*head).freeMem();
+        }
+
 
 
         /*
@@ -561,22 +576,19 @@ int main(int argc, char **argv) {
             if (flag) {
                 if (status.MPI_TAG == MessageTag::WORK) {
                     // receive & deserialize message
-                    int LENGTH;
-                    MPI_Get_count(&status, MPI_CHAR, &LENGTH);
-                    char *buf = new char[LENGTH];
-                    MPI_Recv(&buf[0], LENGTH, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
+                    int msgLen;
+                    MPI_Get_count(&status, MPI_CHAR, &msgLen);
+                    ensureBufferSize(&buf, bufLen, msgLen);
+                    MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                              MPI_STATUS_IGNORE);
-                    ChessBoard *bestBoard = ChessBoard::deserialize(buf, LENGTH);
+                    ChessBoard bestBoard = ChessBoard::deserialize(buf, msgLen);
 
                     // run
-                    bb_dfs_data_par(ChessBoard::deserialize(buf, LENGTH), best, bestBoard, counter);
-                    delete[] buf;
+                    bb_dfs_data_par(ChessBoard::deserialize(buf, msgLen), best, &bestBoard, counter);
 
                     // send result
-                    buf = bestBoard->serialize(LENGTH);
-                    delete bestBoard;
-                    MPI_Send(buf, LENGTH, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
-                    delete[]buf;
+                    bestBoard.serialize(buf, bufLen, msgLen);
+                    MPI_Send(buf, msgLen, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
                 } else if (status.MPI_TAG == MessageTag::FINISHED) {
                     break;
                 }
@@ -584,6 +596,7 @@ int main(int argc, char **argv) {
         }
     }
 
+    delete[]buf;
     MPI_Finalize();
     return 0;
 }
