@@ -731,7 +731,7 @@ int main(int argc, char **argv) {
             MPI_Iprobe(MPI_ANY_SOURCE, MessageTag::DONE, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
                 // receive & deserialize solution board
-                MPI_Get_count(&status, MPI_CHAR, &msgLen);
+                MPI_Get_count(&status, MPI_INT, &msgLen);
                 MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                          MPI_STATUS_IGNORE);
                 ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
