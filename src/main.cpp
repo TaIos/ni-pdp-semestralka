@@ -120,11 +120,11 @@ private:
 
     ChessPiece bishop;
     ChessPiece horse;
-    vector<ChessMove> move_log;
+    vector<ChessMove> moveLog;
 
     void logMovePiece(int row, int col) {
         bool tookPawn = at(row, col) == PAWN;
-        move_log.emplace_back(ChessMove(row, col, tookPawn));
+        moveLog.emplace_back(ChessMove(row, col, tookPawn));
     }
 
     void movePiece(ChessPiece &p, int row, int col) {
@@ -181,7 +181,7 @@ public:
         pawn_cnt = oth.pawn_cnt;
         min_depth = oth.min_depth;
         max_depth = oth.max_depth;
-        move_log = oth.move_log;
+        moveLog = oth.moveLog;
     };
 
     char *serialize(int &outLen) {
@@ -189,7 +189,8 @@ public:
         return new char[10];
     }
 
-    void serializeToBuffer(char **buf, int &bufLen) {
+    void serializeToBuffer(char **buf, int &bufLen, int &outLen) {
+        // TODO
         ensureBufferSize(buf, bufLen, 1000);
     }
 
@@ -206,7 +207,7 @@ public:
         pawn_cnt = oth.pawn_cnt;
         min_depth = oth.min_depth;
         max_depth = oth.max_depth;
-        move_log = oth.move_log;
+        moveLog = oth.moveLog;
         return *this;
     }
 
@@ -248,7 +249,7 @@ public:
     }
 
     const vector<ChessMove> &getMoveLog() const {
-        return move_log;
+        return moveLog;
     }
 
     friend ostream &operator<<(ostream &os, const ChessBoard &g) {
@@ -268,6 +269,10 @@ public:
     int getMinDepth() const {
         return min_depth;
     }
+
+    int getPathLen() const {
+        return moveLog.size();
+    }
 };
 
 struct Instance {
@@ -280,7 +285,7 @@ struct Instance {
     // TODO
     Instance() {}
 
-    void serializeToBuffer(char **buf, int &bufLen) {
+    void serializeToBuffer(char **buf, int &bufLen, int &outLen) {
         // TODO
         ensureBufferSize(buf, bufLen, 1000);
     }
@@ -540,15 +545,44 @@ int main(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &p);
 
     if (p == 0) { // master process
-        long bestPathLenGlobal = numeric_limits<long>::max();
         ChessBoard initBoard = ChessBoard(argv[0]);
+        ChessBoard bestBoard(initBoard);
+        int bestPathLen = numeric_limits<int>::max();
         vector<Instance *> insList = generateInstances(initBoard, 0, HORSE);
+        size_t insHead = 0;
+        int msgLen;
 
         // send initial work to each slave
-        int i, outLen;
-        for (i = 1; i < p && i < insList.size(); i++) {
-            insList[i]->serializeToBuffer(&buf, bufLen);
-            MPI_Send(buf, bufLen, MPI_CHAR, p, MessageTag::WORK, MPI_COMM_WORLD);
+        for (int i = 1; i < p && insHead < insList.size(); i++) {
+            insList[insHead++]->serializeToBuffer(&buf, bufLen, msgLen);
+            MPI_Send(buf, msgLen, MPI_CHAR, p, MessageTag::WORK, MPI_COMM_WORLD);
+        }
+
+        // check for finished work from slaves
+        // send message to all slaves if best solution is updated
+        int flag;
+        MPI_Status status;
+        while (insHead < insList.size()) {
+            MPI_Iprobe(MPI_ANY_SOURCE, MessageTag::DONE, MPI_COMM_WORLD, &flag, &status);
+            if (flag) {
+                // receive & deserialize board
+                MPI_Get_count(&status, MPI_CHAR, &msgLen);
+                ensureBufferSize(&buf, bufLen, msgLen);
+                MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
+                         MPI_STATUS_IGNORE);
+                ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
+
+                // update best solution
+                if (receivedBoard.getPathLen() < bestPathLen) {
+                    bestBoard = receivedBoard;
+                    bestPathLen = receivedBoard.getPathLen();
+                    for (int i = 1; i < p; i++) {
+                        if (i != status.MPI_SOURCE) {
+                            MPI_Send(&bestPathLen, 1, MPI_INT, i, MessageTag::UPDATE, MPI_COMM_WORLD);
+                        }
+                    }
+                }
+            }
         }
 
         /*
@@ -574,15 +608,15 @@ int main(int argc, char **argv) {
     } else { // slave process
         int flag;
         MPI_Status status;
-        long bestPathLenSlave = numeric_limits<long>::max();
+        long bestPathLenSlave = numeric_limits<int>::max();
         long counterSlave = 0;
+        int msgLen;
 
         while (true) {
             MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
                 if (status.MPI_TAG == MessageTag::WORK) {
                     // receive & deserializeFromBuffer message
-                    int msgLen;
                     MPI_Get_count(&status, MPI_CHAR, &msgLen);
                     ensureBufferSize(&buf, bufLen, msgLen);
                     MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
@@ -593,8 +627,8 @@ int main(int argc, char **argv) {
                     ChessBoard bestBoard = bb_dfs_data_par(receivedBoard, bestPathLenSlave, counterSlave);
 
                     // send result
-                    bestBoard.serializeToBuffer(&buf, bufLen);
-                    MPI_Send(buf, bufLen, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
+                    bestBoard.serializeToBuffer(&buf, bufLen, msgLen);
+                    MPI_Send(buf, msgLen, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
                 } else if (status.MPI_TAG == MessageTag::FINISHED) {
                     break;
                 }
