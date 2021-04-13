@@ -21,7 +21,7 @@ enum MessageTag {
     DONE = 0, // work is done, #define result
     WORK = 1, // work to be done, #d staring state
     FINISHED = 2, // there is no more work to be #define
-    UPDATE = 3 // update on the best solution found by slave on it's instance
+    UPDATE = 3 // update on the bestPathLen solution found by slave on it's instance
 };
 
 
@@ -135,6 +135,8 @@ private:
         p.setCol(col);
     }
 
+    ChessBoard() = default;
+
 public:
 
     // returned when accessing invalid position in chess board
@@ -179,26 +181,13 @@ public:
         move_log = oth.move_log;
     };
 
-    /**
-     * Serialize chessboard to array
-     *
-     * @param n length of the result
-     * @return result
-     */
-    char *serialize(char *buffer, int bufsize, int &outsize) {
-        outsize = 10;
+    char *serialize(char *buffer, int bufLen, int &outLen) {
+        outLen = 10;
         return new char[10];
     }
 
-    /**
-     * Deserialize chessboard from array
-     *
-     * @param data serialized chessboard
-     * @param n array length
-     * @return deserialized chessboard instance
-     */
-    static ChessBoard deserialize(char *data, int n) {
-        return nullptr;
+    static ChessBoard deserialize(char *buf, int bufLen) {
+        return ChessBoard();
     }
 
     ChessBoard &operator=(const ChessBoard &oth) {
@@ -273,6 +262,16 @@ public:
         return min_depth;
     }
 };
+
+struct Instance {
+    ChessBoard board;
+    int depth;
+    char play;
+
+    Instance(const ChessBoard &board, int depth, char play) : board(board), depth(depth), play(play) {}
+
+};
+
 
 class EvalPosition {
 public:
@@ -430,77 +429,64 @@ public:
 
 };
 
-
 // return true if there is better board available
-bool betterBoardExists(long depth, long best, ChessBoard *g) {
+bool betterBoardExists(Instance *ins, long bestPathLen) {
     return
-            depth + g->getPawnCnt() >= best || // solution with lower cost already exists
-            depth + g->getPawnCnt() > g->getMaxDepth() || // max depth would be reached if each play would remove figure
-            best == g->getMinDepth(); // optimum was reached
+            ins->depth + ins->board.getPawnCnt() >= bestPathLen || // solution with lower cost already exists
+            ins->depth + ins->board.getPawnCnt() > ins->board.getMaxDepth() ||
+            // max depth would be reached if each play would remove figure
+            bestPathLen == ins->board.getMinDepth(); // optimum was reached
 }
 
-void bb_dfs_seq(ChessBoard *g, long depth, char play, long &best, ChessBoard *bestBoard, long &counter) {
-    if (!betterBoardExists(depth, best, g)) {
-        if (g->getPawnCnt() == 0) {
+void bb_dfs_seq(Instance *ins, ChessBoard &bestBoard, long &bestPathLen, long &counter) {
+    if (!betterBoardExists(ins, bestPathLen)) {
+        if (ins->board.getPawnCnt() == 0) {
 #pragma omp critical
             {
-                if (!betterBoardExists(depth, best, g)) {
-                    best = depth;
-                    *bestBoard = *g;
+                if (!betterBoardExists(ins, bestPathLen)) {
+                    bestPathLen = ins->depth;
+                    bestBoard = ins->board;
                 }
             }
-        } else if (play == HORSE) {
-            for (const auto &m : NextPossibleMoves::for_horse(*g)) {
-                ChessBoard *cpy = new ChessBoard(*g);
-                cpy->moveHorse(m.row, m.col);
-                bb_dfs_seq(cpy, depth + 1, BISHOP, best, bestBoard, counter);
+        } else if (ins->play == HORSE) {
+            for (const auto &m : NextPossibleMoves::for_horse(ins->board)) {
+                ChessBoard cpy(ins->board);
+                cpy.moveHorse(m.row, m.col);
+                bb_dfs_seq(new Instance(cpy, ins->depth + 1, BISHOP), bestBoard, bestPathLen, counter);
             }
-        } else if (play == BISHOP) {
-            for (const auto &m : NextPossibleMoves::for_bishop(*g)) {
-                ChessBoard *cpy = new ChessBoard(*g);
-                cpy->moveBishop(m.row, m.col);
-                bb_dfs_seq(cpy, depth + 1, HORSE, best, bestBoard, counter);
+        } else if (ins->play == BISHOP) {
+            for (const auto &m : NextPossibleMoves::for_bishop(ins->board)) {
+                ChessBoard cpy(ins->board);
+                cpy.moveBishop(m.row, m.col);
+                bb_dfs_seq(new Instance(cpy, ins->depth + 1, HORSE), bestBoard, bestPathLen, counter);
             }
         }
     }
-    delete g;
+    delete ins;
 #pragma omp atomic update
     counter++;
 }
 
-struct Instance {
-    ChessBoard *board;
-    int depth;
-    char play;
-
-    void freeMem() const {
-        delete board;
-    }
-
-    Instance(ChessBoard *board, int depth, char play) : board(board), depth(depth), play(play) {}
-};
-
-vector<Instance> generateInstances(ChessBoard *initBoard, int initDepth, char initPlay) {
-    vector<Instance> instances = vector<Instance>();
-    instances.emplace_back(initBoard, initDepth, initPlay);
+vector<Instance *> generateInstances(const ChessBoard &initBoard, int initDepth, char initPlay) {
+    vector<Instance *> instances = vector<Instance *>();
+    instances.emplace_back(new Instance(initBoard, initDepth, initPlay));
 
     for (int i = 0; i < EPOCH_CNT; i++) {
-        vector<Instance> instancesNext = vector<Instance>();
+        vector<Instance *> instancesNext = vector<Instance *>();
         for (const auto &ins : instances) {
-            if (ins.play == HORSE) {
-                for (const auto &m : NextPossibleMoves::for_horse(*ins.board)) {
-                    ChessBoard *cpy = new ChessBoard(*ins.board);
-                    cpy->moveHorse(m.row, m.col);
-                    instancesNext.emplace_back(cpy, ins.depth + 1, BISHOP);
+            if (ins->play == HORSE) {
+                for (const auto &m : NextPossibleMoves::for_horse(ins->board)) {
+                    ChessBoard cpy(ins->board);
+                    cpy.moveHorse(m.row, m.col);
+                    instancesNext.emplace_back(new Instance(cpy, ins->depth + 1, BISHOP));
                 }
-            } else if (ins.play == BISHOP) {
-                for (const auto &m : NextPossibleMoves::for_bishop(*ins.board)) {
-                    ChessBoard *cpy = new ChessBoard(*ins.board);
-                    cpy->moveBishop(m.row, m.col);
-                    instancesNext.emplace_back(cpy, ins.depth + 1, HORSE);
+            } else if (ins->play == BISHOP) {
+                for (const auto &m : NextPossibleMoves::for_bishop(ins->board)) {
+                    ChessBoard cpy(ins->board);
+                    cpy.moveBishop(m.row, m.col);
+                    instancesNext.emplace_back(new Instance(cpy, ins->depth + 1, HORSE));
                 }
             }
-            ins.freeMem();
         }
         instances = instancesNext;
     }
@@ -508,12 +494,14 @@ vector<Instance> generateInstances(ChessBoard *initBoard, int initDepth, char in
     return instances;
 }
 
-void bb_dfs_data_par(ChessBoard *g, long &best, ChessBoard *bestBoard, long &counter) {
-    vector<Instance> instances = generateInstances(g, 0, BISHOP);
-#pragma omp parallel for shared(best, bestBoard, counter, instances) schedule(dynamic) default(none)
+ChessBoard bb_dfs_data_par(const ChessBoard &startBoard, long &bestPathLen, long &counter) {
+    vector<Instance *> instances = generateInstances(startBoard, 0, BISHOP);
+    ChessBoard bestBoard(startBoard);
+#pragma omp parallel for shared(instances, bestBoard, bestPathLen, counter) schedule(dynamic) default(none)
     for (unsigned long i = 0; i < instances.size(); i++) {
-        bb_dfs_seq(instances[i].board, instances[i].depth, instances[i].play, best, bestBoard, counter);
+        bb_dfs_seq(instances[i], bestBoard, bestPathLen, counter);
     }
+    return bestBoard;
 }
 
 int main(int argc, char **argv) {
@@ -533,30 +521,26 @@ int main(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &p);
 
     if (p == 0) { // master process
-        string filename = argv[0];
-        long bestGlobal = numeric_limits<long>::max();
-        ChessBoard bestBoard = ChessBoard(filename);
-        vector<Instance> instances = generateInstances(new ChessBoard(filename), 0, HORSE);
-        vector<Instance>::iterator head = instances.begin();
+        long bestPathLenGlobal = numeric_limits<long>::max();
+        ChessBoard initBoard = ChessBoard(argv[0]);
+        vector<Instance *> instances = generateInstances(initBoard, 0, HORSE);
+        vector<Instance *>::iterator head = instances.begin();
 
         // send initial work to each slave
         for (int i = 1; i < p && head != instances.end(); i++, head++) {
-            MPI_Pack(&a, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
-            (*head).freeMem();
+//            MPI_Pack(&a, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
         }
-
-
 
         /*
         long counter = 0;
 
         cout << startingBoard << endl;
         auto start = chrono::high_resolution_clock::now();
-        bb_dfs_data_par(new ChessBoard(filename), bestGlobal, &startingBoard, counter);
+        bb_dfs_data_par(new ChessBoard(filename), bestPathLenGlobal, &startingBoard, counter);
         auto stop = chrono::high_resolution_clock::now();
 
         cout << "Cena\tPočet volání\tČas [ms]" << endl;
-        cout << bestGlobal << "\t" << counter << "\t\t"
+        cout << bestPathLenGlobal << "\t" << counter << "\t\t"
              << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << endl << endl;
 
         cout << "Tahy" << endl;
@@ -568,8 +552,8 @@ int main(int argc, char **argv) {
     } else { // slave process
         int flag;
         MPI_Status status;
-        long best = numeric_limits<long>::max();
-        long counter = 0;
+        long bestPathLenSlave = numeric_limits<long>::max();
+        long counterSlave = 0;
 
         while (true) {
             MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
@@ -581,10 +565,10 @@ int main(int argc, char **argv) {
                     ensureBufferSize(&buf, bufLen, msgLen);
                     MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                              MPI_STATUS_IGNORE);
-                    ChessBoard bestBoard = ChessBoard::deserialize(buf, msgLen);
+                    ChessBoard receivedBoard = ChessBoard::deserialize(buf, msgLen);
 
                     // run
-                    bb_dfs_data_par(ChessBoard::deserialize(buf, msgLen), best, &bestBoard, counter);
+                    ChessBoard bestBoard = bb_dfs_data_par(receivedBoard, bestPathLenSlave, counterSlave);
 
                     // send result
                     bestBoard.serialize(buf, bufLen, msgLen);
