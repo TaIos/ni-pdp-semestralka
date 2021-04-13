@@ -14,11 +14,15 @@
 #define PAWN 'P'
 #define EMPTY '-'
 
-// MPI message TAGs
-#define TAG_DONE = 0; // work is done, #define result
-#define TAG_WORK = 1; // work to be done, #d staring state
-#define TAG_FINISHED = 2; // there is no more work to be #define
-#define TAG_UPDATE = 3; // update on the best solution found by slave on it's instance
+/**
+ * MPI message TAGs
+ */
+enum MessageTag {
+    DONE = 0, // work is done, #define result
+    WORK = 1, // work to be done, #d staring state
+    FINISHED = 2, // there is no more work to be #define
+    UPDATE = 3 // update on the best solution found by slave on it's instance
+};
 
 
 // relative mapping for all possible horse movements
@@ -168,6 +172,28 @@ public:
         max_depth = oth.max_depth;
         move_log = oth.move_log;
     };
+
+    /**
+     * Serialize chessboard to array
+     *
+     * @param n length of the result
+     * @return result
+     */
+    char *serialize(int &n) {
+        n = 10;
+        return new char[10];
+    }
+
+    /**
+     * Deserialize chessboard from array
+     *
+     * @param data serialized chessboard
+     * @param n array length
+     * @return deserialized chessboard instance
+     */
+    static ChessBoard *deserialize(char *data, int n) {
+        return nullptr;
+    }
 
     ChessBoard &operator=(const ChessBoard &oth) {
         memcpy(grid, oth.grid, oth.size);
@@ -521,7 +547,18 @@ int main(int argc, char **argv) {
         }
 
     } else { // slave process
+        int LENGTH = 10;
+        MPI_Status status;
+        char *msg = new char[LENGTH];
+        while (true) {
+            MPI_Recv(&msg, LENGTH, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            if (status.MPI_TAG == MessageTag::WORK) {
 
+            } else if (status.MPI_TAG == MessageTag::FINISHED) {
+                break;
+            }
+        }
+        delete[] msg;
     }
 
     MPI_Finalize();
