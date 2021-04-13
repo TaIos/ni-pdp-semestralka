@@ -56,16 +56,15 @@ class ChessBoard {
 private:
     char *grid = nullptr;
     int size;
-    int row_len;
-    int pawn_cnt;
-    int min_depth;
+    int rowLen;
+    int pawnCnt;
+    int minDepth;
 
     // PDP hint heuristic
-    int max_depth;
-
+    int maxDepth;
 
     void setAt(int row, int col, char value) {
-        grid[row * row_len + col] = value;
+        grid[row * rowLen + col] = value;
     }
 
     class ChessMove {
@@ -76,6 +75,7 @@ private:
     public:
         ChessMove(int row, int col, bool tookPawn) : row(row), col(col), tookPawn(tookPawn) {}
 
+        ChessMove() = default;
 
         friend ostream &operator<<(ostream &os, const ChessMove &m) {
             os << m.row << "," << m.col;
@@ -83,6 +83,41 @@ private:
             return os;
         }
 
+        void serializeToBuffer(char *buf, int bufLen, int &written) {
+            char *head = buf;
+
+            memcpy(head, &row, sizeof(row));
+            head += sizeof(row);
+
+            memcpy(head, &col, sizeof(col));
+            head += sizeof(col);
+
+            short tookPawnShort = tookPawn;
+            memcpy(head, &tookPawnShort, sizeof(tookPawnShort));
+            head += sizeof(tookPawnShort);
+
+            written = head - buf;
+        }
+
+        static ChessMove deserializeFromBuffer(char *buf, int bufLen, int &read) {
+            char *head = buf;
+
+            int row;
+            memcpy(&row, head, sizeof(row));
+            head += sizeof(row);
+
+            int col;
+            memcpy(&col, head, sizeof(col));
+            head += sizeof(col);
+
+            short tookPawnShort;
+            memcpy(&tookPawnShort, head, sizeof(tookPawnShort));
+            bool tookPawn = tookPawnShort;
+            head += sizeof(tookPawnShort);
+
+            read = head - buf;
+            return ChessMove(row, col, tookPawn);
+        }
     };
 
     class ChessPiece {
@@ -95,6 +130,37 @@ private:
         ChessPiece() = default;
 
         ChessPiece(int row, int col, char type) : row(row), col(col), type(type) {}
+
+        void serializeToBuffer(char *buf, int bufLen, int &written) {
+            char *head = buf;
+
+            memcpy(head, &row, sizeof(row));
+            head += sizeof(row);
+
+            memcpy(head, &col, sizeof(col));
+            head += sizeof(col);
+
+            *(head++) = type;
+
+            written = head - buf;
+        }
+
+        static ChessPiece deserializeFromBuffer(char *buf, int bufLen, int &read) {
+            char *head = buf;
+
+            int row;
+            memcpy(&row, head, sizeof(row));
+            head += sizeof(row);
+
+            int col;
+            memcpy(&col, head, sizeof(col));
+            head += sizeof(col);
+
+            char type = *(head++);
+
+            read = head - buf;
+            return ChessPiece(row, col, type);
+        }
 
         int getRow() const {
             return row;
@@ -129,28 +195,31 @@ private:
 
     void movePiece(ChessPiece &p, int row, int col) {
         logMovePiece(row, col);
-        if (at(row, col) == PAWN) pawn_cnt--;
+        if (at(row, col) == PAWN) pawnCnt--;
         setAt(row, col, p.getType());
         setAt(p.getRow(), p.getCol(), EMPTY);
         p.setRow(row);
         p.setCol(col);
     }
 
+public:
+    ChessBoard(char *grid, int size, int rowLen, int pawnCnt, int minDepth, int maxDepth, const ChessPiece &bishop,
+               const ChessPiece &horse, const vector<ChessMove> &moveLog) : grid(grid), size(size), rowLen(rowLen),
+                                                                            pawnCnt(pawnCnt), minDepth(minDepth),
+                                                                            maxDepth(maxDepth), bishop(bishop),
+                                                                            horse(horse), moveLog(moveLog) {}
 
 public:
-
-    // TODO
-    ChessBoard() = default;
 
     // returned when accessing invalid position in chess board
     const static char INVALID_AT = '\0';
 
     ChessBoard(const string &filename) {
         ifstream ifs(filename);
-        ifs >> row_len;
-        ifs >> max_depth;
-        size = row_len * row_len;
-        pawn_cnt = 0;
+        ifs >> rowLen;
+        ifs >> maxDepth;
+        size = rowLen * rowLen;
+        pawnCnt = 0;
         grid = new char[size];
         memset(grid, EMPTY, size);
 
@@ -159,54 +228,132 @@ public:
         while (ifs.get(c) && head < grid + size) {
             if (c != '\n' && c != '\r') {
                 int idx = int(head - grid);
-                int row = int(idx / row_len);
-                int col = idx % row_len;
+                int row = int(idx / rowLen);
+                int col = idx % rowLen;
                 if (c == BISHOP) bishop = ChessPiece(row, col, BISHOP);
                 if (c == HORSE) horse = ChessPiece(row, col, HORSE);
-                if (c == PAWN) pawn_cnt++;
+                if (c == PAWN) pawnCnt++;
                 *(head++) = c;
             }
         }
         ifs.close();
-        min_depth = pawn_cnt;
+        minDepth = pawnCnt;
     };
 
     ChessBoard(const ChessBoard &oth) {
         grid = new char[oth.size];
         memcpy(grid, oth.grid, oth.size);
         size = oth.size;
-        row_len = oth.row_len;
+        rowLen = oth.rowLen;
         bishop = oth.bishop;
         horse = oth.horse;
-        pawn_cnt = oth.pawn_cnt;
-        min_depth = oth.min_depth;
-        max_depth = oth.max_depth;
+        pawnCnt = oth.pawnCnt;
+        minDepth = oth.minDepth;
+        maxDepth = oth.maxDepth;
         moveLog = oth.moveLog;
     };
 
-    char *serialize(int &outLen) {
-        outLen = 10;
-        return new char[10];
-    }
+    void serializeToBuffer(char *buf, int bufLen, int &written) {
+        char *head = buf;
+        int cnt;
 
-    void serializeToBuffer(char **buf, int &bufLen, int &outLen) {
-        // TODO
-        ensureBufferSize(buf, bufLen, 1000);
+        memcpy(head, &size, sizeof(size));
+        head += sizeof(size);
+
+        memcpy(head, &rowLen, sizeof(rowLen));
+        head += sizeof(rowLen);
+
+        memcpy(head, &pawnCnt, sizeof(pawnCnt));
+        head += sizeof(pawnCnt);
+
+        memcpy(head, &minDepth, sizeof(minDepth));
+        head += sizeof(minDepth);
+
+        memcpy(head, &maxDepth, sizeof(maxDepth));
+        head += sizeof(maxDepth);
+
+        memcpy(head, grid, size);
+        head += size;
+
+        bishop.serializeToBuffer(buf, bufLen - (head - buf), cnt);
+        head += cnt;
+
+        horse.serializeToBuffer(buf, bufLen - (head - buf), cnt);
+        head += cnt;
+
+        int moveLogSize = moveLog.size();
+        memcpy(head, &moveLogSize, sizeof(moveLogSize));
+        head += sizeof(moveLogSize);
+
+        for (int i = 0; i < moveLogSize; i++) {
+            moveLog[i].serializeToBuffer(buf, bufLen - (head - buf), cnt);
+            head += cnt;
+        }
+
+        written = head - buf;
     }
 
     static ChessBoard deserializeFromBuffer(char *buf, int bufLen) {
-        return ChessBoard();
+        int read;
+        return deserializeFromBuffer(buf, bufLen, read);
+    }
+
+    static ChessBoard deserializeFromBuffer(char *buf, int bufLen, int &read) {
+        char *head = buf;
+        int cnt;
+
+        int size;
+        memcpy(&size, head, sizeof(size));
+        head += sizeof(size);
+
+        int rowLen;
+        memcpy(&rowLen, head, sizeof(rowLen));
+        head += sizeof(rowLen);
+
+        int pawnCnt;
+        memcpy(&pawnCnt, head, sizeof(pawnCnt));
+        head += sizeof(pawnCnt);
+
+        int minDepth;
+        memcpy(&minDepth, head, sizeof(minDepth));
+        head += sizeof(minDepth);
+
+        int maxDepth;
+        memcpy(&maxDepth, head, sizeof(maxDepth));
+        head += sizeof(maxDepth);
+
+        char *grid = new char[size];
+        memcpy(grid, head, size);
+        head += size;
+
+        ChessPiece bishop = ChessPiece::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
+        head += cnt;
+        ChessPiece horse = ChessPiece::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
+        head += cnt;
+
+        int moveLogSize;
+        memcpy(&moveLogSize, head, sizeof(moveLogSize));
+        head += sizeof(moveLogSize);
+
+        vector<ChessMove> moveLog(moveLogSize);
+        for (int i = 0; i < moveLogSize; i++) {
+            moveLog[i] = ChessMove::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
+            head += cnt;
+        }
+
+        read = head - buf;
+        return ChessBoard(grid, size, rowLen, pawnCnt, minDepth, maxDepth, bishop, horse, moveLog);
     }
 
     ChessBoard &operator=(const ChessBoard &oth) {
         memcpy(grid, oth.grid, oth.size);
         size = oth.size;
-        row_len = oth.row_len;
+        rowLen = oth.rowLen;
         bishop = oth.bishop;
         horse = oth.horse;
-        pawn_cnt = oth.pawn_cnt;
-        min_depth = oth.min_depth;
-        max_depth = oth.max_depth;
+        pawnCnt = oth.pawnCnt;
+        minDepth = oth.minDepth;
+        maxDepth = oth.maxDepth;
         moveLog = oth.moveLog;
         return *this;
     }
@@ -216,8 +363,8 @@ public:
     }
 
     char at(int row, int col) const {
-        if (row < 0 || col < 0 || row >= row_len || col >= row_len) return INVALID_AT;
-        return grid[row * row_len + col];
+        if (row < 0 || col < 0 || row >= rowLen || col >= rowLen) return INVALID_AT;
+        return grid[row * rowLen + col];
     };
 
     void moveBishop(int row, int col) {
@@ -229,11 +376,11 @@ public:
     }
 
     int getPawnCnt() const {
-        return pawn_cnt;
+        return pawnCnt;
     }
 
     int getMaxDepth() const {
-        return max_depth;
+        return maxDepth;
     }
 
     const ChessPiece &getBishop() const {
@@ -245,7 +392,7 @@ public:
     }
 
     int getRowLen() const {
-        return row_len;
+        return rowLen;
     }
 
     const vector<ChessMove> &getMoveLog() const {
@@ -253,21 +400,21 @@ public:
     }
 
     friend ostream &operator<<(ostream &os, const ChessBoard &g) {
-        os << "Délka strany šachovnice: " << g.row_len << endl;
-        os << "minimální hloubka: " << g.min_depth << ", maximální hloubka: " << g.max_depth << endl;
+        os << "Délka strany šachovnice: " << g.rowLen << endl;
+        os << "minimální hloubka: " << g.minDepth << ", maximální hloubka: " << g.maxDepth << endl;
         os << "Kůň na (" << g.horse.getRow() << "," << g.horse.getCol() << ")" << endl;
         os << "Střelec na (" << g.bishop.getRow() << "," << g.bishop.getCol() << ")" << endl;
-        os << "Počet pěšáků " << g.pawn_cnt << endl;
+        os << "Počet pěšáků " << g.pawnCnt << endl;
         for (int i = 0; i < g.size; i++) {
             os << g.grid[i];
-            if ((i + 1) % g.row_len) os << " | ";
+            if ((i + 1) % g.rowLen) os << " | ";
             else os << endl;
         }
         return os;
     }
 
     int getMinDepth() const {
-        return min_depth;
+        return minDepth;
     }
 
     int getPathLen() const {
@@ -282,17 +429,36 @@ struct Instance {
 
     Instance(const ChessBoard &board, int depth, char play) : board(board), depth(depth), play(play) {}
 
-    // TODO
-    Instance() {}
+    void serializeToBuffer(char *buf, int bufLen, int &written) {
+        char *head = buf;
+        int cnt;
 
-    void serializeToBuffer(char **buf, int &bufLen, int &outLen) {
-        // TODO
-        ensureBufferSize(buf, bufLen, 1000);
+        memcpy(head, &depth, sizeof(depth));
+        head += sizeof(depth);
+
+        *(head++) = play;
+
+        board.serializeToBuffer(buf, bufLen - (head - buf), cnt);
+        head += cnt;
+
+        written = head - buf;
     }
 
-    Instance deSerializeFromBuffer(char *buf, int bufLen) {
-        // TODO
-        return Instance();
+    static Instance deserializeFromBuffer(char *buf, int bufLen, int &read) {
+        char *head = buf;
+        int cnt;
+
+        int depth;
+        memcpy(&depth, head, sizeof(depth));
+        head += sizeof(depth);
+
+        char play = *(head++);
+
+        ChessBoard board = ChessBoard::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
+        head += cnt;
+
+        read = head - buf;
+        return Instance(board, depth, play);
     }
 };
 
@@ -532,7 +698,7 @@ int main(int argc, char **argv) {
     int myRank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
-    int bufLen = 1000;
+    int bufLen = 1000000;
     char *buf = new char[bufLen];
 
     if (myRank == 0) { // master process
@@ -548,7 +714,7 @@ int main(int argc, char **argv) {
 
         // send initial work to each slave
         for (int i = 1; i < processCount && insHead < insList.size(); i++) {
-            insList[insHead]->serializeToBuffer(&buf, bufLen, msgLen);
+            insList[insHead]->serializeToBuffer(buf, bufLen, msgLen);
             MPI_Send(buf, msgLen, MPI_CHAR, i, MessageTag::WORK, MPI_COMM_WORLD);
             runningSlaves++;
             insHead++;
@@ -582,7 +748,7 @@ int main(int argc, char **argv) {
                 // or
                 // send finish flag if there is no more work
                 if (insHead < insList.size()) {
-                    insList[insHead]->serializeToBuffer(&buf, bufLen, msgLen);
+                    insList[insHead]->serializeToBuffer(buf, bufLen, msgLen);
                     MPI_Send(buf, msgLen, MPI_CHAR, status.MPI_SOURCE, MessageTag::WORK, MPI_COMM_WORLD);
                     insHead++;
                 } else {
@@ -638,7 +804,7 @@ int main(int argc, char **argv) {
                     ChessBoard bestBoard = bbDfsDataPar(receivedBoard, bestPathLenSlave, counterSlave);
 
                     // send result
-                    bestBoard.serializeToBuffer(&buf, bufLen, msgLen);
+                    bestBoard.serializeToBuffer(buf, bufLen, msgLen);
                     MPI_Send(buf, msgLen, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
                 } else if (status.MPI_TAG == MessageTag::FINISHED) {
                     break;
