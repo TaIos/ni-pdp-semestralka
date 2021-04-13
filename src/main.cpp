@@ -699,8 +699,8 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     MPI_Comm_size(MPI_COMM_WORLD, &processCount);
 
-    int bufLen = 1000000;
-    char *buf = new char[bufLen];
+    const int bufLen = 1000000;
+    char buf[bufLen];
 
     if (myRank == 0) { // master process
         ChessBoard startBoard = ChessBoard(argv[1]);
@@ -731,7 +731,7 @@ int main(int argc, char **argv) {
             MPI_Iprobe(MPI_ANY_SOURCE, MessageTag::DONE, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
                 // receive & deserialize solution board
-                MPI_Get_count(&status, MPI_INT, &msgLen);
+                MPI_Get_count(&status, MPI_CHAR, &msgLen);
                 MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                          MPI_STATUS_IGNORE);
                 ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
@@ -799,7 +799,7 @@ int main(int argc, char **argv) {
             if (flag) {
                 if (status.MPI_TAG == MessageTag::WORK) {
                     // receive & deserializeFromBuffer message
-                    MPI_Get_count(&status, MPI_INT, &msgLen);
+                    MPI_Get_count(&status, MPI_CHAR, &msgLen);
                     cout << myRank << ": " << "Dostal jsem novou práci (" << msgLen << " bajtů)" << endl;
                     MPI_Recv(buf, msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                              MPI_STATUS_IGNORE);
@@ -818,7 +818,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    delete[]buf;
     MPI_Finalize();
     return 0;
 }
