@@ -45,10 +45,11 @@ const int HORSE_CAND[8][2] = {
 
 using namespace std;
 
-void ensureBufferSize(char **buf, int current, int needed) {
-    if (current >= needed) return;
+void ensureBufferSize(char **buf, int &bufLen, int bufLenNeeded) {
+    if (bufLen >= bufLenNeeded) return;
     delete[] *buf;
-    *buf = new char[needed];
+    *buf = new char[bufLenNeeded];
+    bufLen = bufLenNeeded;
 }
 
 class ChessBoard {
@@ -135,9 +136,11 @@ private:
         p.setCol(col);
     }
 
-    ChessBoard() = default;
 
 public:
+
+    // TODO
+    ChessBoard() = default;
 
     // returned when accessing invalid position in chess board
     const static char INVALID_AT = '\0';
@@ -181,12 +184,16 @@ public:
         move_log = oth.move_log;
     };
 
-    char *serialize(char *buffer, int bufLen, int &outLen) {
+    char *serialize(int &outLen) {
         outLen = 10;
         return new char[10];
     }
 
-    static ChessBoard deserialize(char *buf, int bufLen) {
+    void serializeToBuffer(char **buf, int &bufLen) {
+        ensureBufferSize(buf, bufLen, 1000);
+    }
+
+    static ChessBoard deserializeFromBuffer(char *buf, int bufLen) {
         return ChessBoard();
     }
 
@@ -270,6 +277,18 @@ struct Instance {
 
     Instance(const ChessBoard &board, int depth, char play) : board(board), depth(depth), play(play) {}
 
+    // TODO
+    Instance() {}
+
+    void serializeToBuffer(char **buf, int &bufLen) {
+        // TODO
+        ensureBufferSize(buf, bufLen, 1000);
+    }
+
+    Instance deSerializeFromBuffer(char *buf, int bufLen) {
+        // TODO
+        return Instance();
+    }
 };
 
 
@@ -523,12 +542,13 @@ int main(int argc, char **argv) {
     if (p == 0) { // master process
         long bestPathLenGlobal = numeric_limits<long>::max();
         ChessBoard initBoard = ChessBoard(argv[0]);
-        vector<Instance *> instances = generateInstances(initBoard, 0, HORSE);
-        vector<Instance *>::iterator head = instances.begin();
+        vector<Instance *> insList = generateInstances(initBoard, 0, HORSE);
 
         // send initial work to each slave
-        for (int i = 1; i < p && head != instances.end(); i++, head++) {
-//            MPI_Pack(&a, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
+        int i, outLen;
+        for (i = 1; i < p && i < insList.size(); i++) {
+            insList[i]->serializeToBuffer(&buf, bufLen);
+            MPI_Send(buf, bufLen, MPI_CHAR, p, MessageTag::WORK, MPI_COMM_WORLD);
         }
 
         /*
@@ -549,6 +569,8 @@ int main(int argc, char **argv) {
         }
          */
 
+        // cleanup
+        for (const auto &ins : insList) delete ins;
     } else { // slave process
         int flag;
         MPI_Status status;
@@ -559,20 +581,20 @@ int main(int argc, char **argv) {
             MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
                 if (status.MPI_TAG == MessageTag::WORK) {
-                    // receive & deserialize message
+                    // receive & deserializeFromBuffer message
                     int msgLen;
                     MPI_Get_count(&status, MPI_CHAR, &msgLen);
                     ensureBufferSize(&buf, bufLen, msgLen);
                     MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                              MPI_STATUS_IGNORE);
-                    ChessBoard receivedBoard = ChessBoard::deserialize(buf, msgLen);
+                    ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
 
                     // run
                     ChessBoard bestBoard = bb_dfs_data_par(receivedBoard, bestPathLenSlave, counterSlave);
 
                     // send result
-                    bestBoard.serialize(buf, bufLen, msgLen);
-                    MPI_Send(buf, msgLen, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
+                    bestBoard.serializeToBuffer(&buf, bufLen);
+                    MPI_Send(buf, bufLen, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
                 } else if (status.MPI_TAG == MessageTag::FINISHED) {
                     break;
                 }
