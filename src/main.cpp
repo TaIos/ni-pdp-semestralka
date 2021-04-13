@@ -528,37 +528,60 @@ int main(int argc, char **argv) {
 
     if (p == 0) { // master process
         string filename = argv[0];
-        long best = numeric_limits<long>::max();
-        ChessBoard bestBoard = ChessBoard(filename);
+        long bestGlobal = numeric_limits<long>::max();
+        ChessBoard startingBoard = ChessBoard(filename);
+
+
+        /*
         long counter = 0;
 
-        cout << bestBoard << endl;
+        cout << startingBoard << endl;
         auto start = chrono::high_resolution_clock::now();
-        bb_dfs_data_par(new ChessBoard(filename), best, &bestBoard, counter);
+        bb_dfs_data_par(new ChessBoard(filename), bestGlobal, &startingBoard, counter);
         auto stop = chrono::high_resolution_clock::now();
 
         cout << "Cena\tPočet volání\tČas [ms]" << endl;
-        cout << best << "\t" << counter << "\t\t"
+        cout << bestGlobal << "\t" << counter << "\t\t"
              << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << endl << endl;
 
         cout << "Tahy" << endl;
-        for (const auto &move : bestBoard.getMoveLog()) {
+        for (const auto &move : startingBoard.getMoveLog()) {
             cout << move << endl;
         }
+         */
 
     } else { // slave process
-        int LENGTH = 10;
+        int flag;
         MPI_Status status;
-        char *msg = new char[LENGTH];
-        while (true) {
-            MPI_Recv(&msg, LENGTH, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            if (status.MPI_TAG == MessageTag::WORK) {
+        long best = numeric_limits<long>::max();
+        long counter = 0;
 
-            } else if (status.MPI_TAG == MessageTag::FINISHED) {
-                break;
+        while (true) {
+            MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+            if (flag) {
+                if (status.MPI_TAG == MessageTag::WORK) {
+                    // receive & deserialize message
+                    int LENGTH;
+                    MPI_Get_count(&status, MPI_CHAR, &LENGTH);
+                    char *buf = new char[LENGTH];
+                    MPI_Recv(&buf[0], LENGTH, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
+                             MPI_STATUS_IGNORE);
+                    ChessBoard *bestBoard = ChessBoard::deserialize(buf, LENGTH);
+
+                    // run
+                    bb_dfs_data_par(ChessBoard::deserialize(buf, LENGTH), best, bestBoard, counter);
+                    delete[] buf;
+
+                    // send result
+                    buf = bestBoard->serialize(LENGTH);
+                    delete bestBoard;
+                    MPI_Send(buf, LENGTH, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
+                    delete[]buf;
+                } else if (status.MPI_TAG == MessageTag::FINISHED) {
+                    break;
+                }
             }
         }
-        delete[] msg;
     }
 
     MPI_Finalize();
