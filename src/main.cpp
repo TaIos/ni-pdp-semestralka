@@ -695,15 +695,14 @@ ChessBoard bbDfsDataPar(const ChessBoard &startBoard, long &bestPathLen, long &c
 
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
-    int myRank;
+    int myRank, processCount;
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &processCount);
 
     int bufLen = 1000000;
     char *buf = new char[bufLen];
 
     if (myRank == 0) { // master process
-        int processCount;
-        MPI_Comm_size(MPI_COMM_WORLD, &processCount);
         ChessBoard startBoard = ChessBoard(argv[1]);
         ChessBoard bestBoard(startBoard);
         int bestPathLen = numeric_limits<int>::max();
@@ -713,10 +712,14 @@ int main(int argc, char **argv) {
         int runningSlaves = 0;
         int msgLen = -1;
 
+        cout << "Počet slave procesů: " << processCount - 1 << endl;
+
         // send initial work to each slave
         for (int i = 1; i < processCount && insHead < insList.size(); i++) {
             insList[insHead]->serializeToBuffer(buf, bufLen, msgLen);
+            cout << myRank << ": Posílam první instanci procesu číslo " << i << " ---> ";
             MPI_Send(buf, msgLen, MPI_CHAR, i, MessageTag::WORK, MPI_COMM_WORLD);
+            cout << "OK" << endl;
             runningSlaves++;
             insHead++;
         }
@@ -789,17 +792,21 @@ int main(int argc, char **argv) {
         long counterSlave = 0;
         int msgLen;
 
+        cout << myRank << ": Čekám na první zprávu" << endl;
+
         // TODO run one thread that will check for messages with results
         while (true) {
             MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
                 if (status.MPI_TAG == MessageTag::WORK) {
+                    cout << myRank << ": " << "Dostal jsem novou práci --> ";
                     // receive & deserializeFromBuffer message
-                    MPI_Get_count(&status, MPI_CHAR, &msgLen);
+                    MPI_Get_count(&status, MPI_INT, &msgLen);
                     ensureBufferSize(&buf, bufLen, msgLen);
                     MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                              MPI_STATUS_IGNORE);
                     ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
+                    cout << "OK" << endl;
 
                     // run
                     ChessBoard bestBoard = bbDfsDataPar(receivedBoard, bestPathLenSlave, counterSlave);
