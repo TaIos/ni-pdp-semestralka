@@ -14,6 +14,12 @@
 #define PAWN 'P'
 #define EMPTY '-'
 
+// MPI message TAGs
+#define TAG_DONE = 0; // work is done, #define result
+#define TAG_WORK = 1; // work to be done, #d staring state
+#define TAG_FINISHED = 2; // there is no more work to be #define
+#define TAG_UPDATE = 3; // update on the best solution found by slave on it's instance
+
 
 // relative mapping for all possible horse movements
 // [ROW, COL]
@@ -493,11 +499,9 @@ int main(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &p);
 
     cout << my_rank << "/" << p << endl;
-    MPI_Finalize();
-    return 0;
 
-    for (int i = 1; i < argc; i++) {
-        string filename = argv[i];
+    if (p == 0) { // master process
+        string filename = argv[0];
         long best = numeric_limits<long>::max();
         ChessBoard bestBoard = ChessBoard(filename);
         long counter = 0;
@@ -516,6 +520,10 @@ int main(int argc, char **argv) {
             cout << move << endl;
         }
 
+    } else { // slave process
+
     }
+
+    MPI_Finalize();
     return 0;
 }
