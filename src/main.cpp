@@ -6,6 +6,7 @@
 #include <chrono>
 #include <algorithm>
 #include <omp.h>
+#include "mpi.h"
 
 // chess pieces
 #define HORSE  'J'
@@ -478,6 +479,22 @@ void bb_dfs_data_par(ChessBoard *g, long &best, ChessBoard *bestBoard, long &cou
 }
 
 int main(int argc, char **argv) {
+
+    int my_rank;
+    int p;
+
+    /* start up MPI */
+    MPI_Init(&argc, &argv);
+
+    /* find out process rank */
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+    /* find out number of processes */
+    MPI_Comm_size(MPI_COMM_WORLD, &p);
+
+    cout << my_rank << "/" << p << endl;
+    MPI_Finalize();
+    return 0;
 
     for (int i = 1; i < argc; i++) {
         string filename = argv[i];
