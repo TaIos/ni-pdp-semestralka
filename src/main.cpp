@@ -296,7 +296,6 @@ struct Instance {
     }
 };
 
-
 class EvalPosition {
 public:
     static int for_horse(const ChessBoard &g, int row, int col) {
@@ -462,7 +461,7 @@ bool betterBoardExists(Instance *ins, long bestPathLen) {
             bestPathLen == ins->board.getMinDepth(); // optimum was reached
 }
 
-void bb_dfs_seq(Instance *ins, ChessBoard &bestBoard, long &bestPathLen, long &counter) {
+void bbDfsSeq(Instance *ins, ChessBoard &bestBoard, long &bestPathLen, long &counter) {
     if (!betterBoardExists(ins, bestPathLen)) {
         if (ins->board.getPawnCnt() == 0) {
 #pragma omp critical
@@ -476,13 +475,13 @@ void bb_dfs_seq(Instance *ins, ChessBoard &bestBoard, long &bestPathLen, long &c
             for (const auto &m : NextPossibleMoves::for_horse(ins->board)) {
                 ChessBoard cpy(ins->board);
                 cpy.moveHorse(m.row, m.col);
-                bb_dfs_seq(new Instance(cpy, ins->depth + 1, BISHOP), bestBoard, bestPathLen, counter);
+                bbDfsSeq(new Instance(cpy, ins->depth + 1, BISHOP), bestBoard, bestPathLen, counter);
             }
         } else if (ins->play == BISHOP) {
             for (const auto &m : NextPossibleMoves::for_bishop(ins->board)) {
                 ChessBoard cpy(ins->board);
                 cpy.moveBishop(m.row, m.col);
-                bb_dfs_seq(new Instance(cpy, ins->depth + 1, HORSE), bestBoard, bestPathLen, counter);
+                bbDfsSeq(new Instance(cpy, ins->depth + 1, HORSE), bestBoard, bestPathLen, counter);
             }
         }
     }
@@ -491,7 +490,7 @@ void bb_dfs_seq(Instance *ins, ChessBoard &bestBoard, long &bestPathLen, long &c
     counter++;
 }
 
-vector<Instance *> generateInstances(const ChessBoard &initBoard, int initDepth, char initPlay) {
+vector<Instance *> generateInstancesFrom(const ChessBoard &initBoard, int initDepth, char initPlay) {
     vector<Instance *> instances = vector<Instance *>();
     instances.emplace_back(new Instance(initBoard, initDepth, initPlay));
 
@@ -518,57 +517,50 @@ vector<Instance *> generateInstances(const ChessBoard &initBoard, int initDepth,
     return instances;
 }
 
-ChessBoard bb_dfs_data_par(const ChessBoard &startBoard, long &bestPathLen, long &counter) {
-    vector<Instance *> instances = generateInstances(startBoard, 0, BISHOP);
+ChessBoard bbDfsDataPar(const ChessBoard &startBoard, long &bestPathLen, long &counter) {
+    vector<Instance *> instances = generateInstancesFrom(startBoard, 0, BISHOP);
     ChessBoard bestBoard(startBoard);
 #pragma omp parallel for shared(instances, bestBoard, bestPathLen, counter) schedule(dynamic) default(none)
     for (unsigned long i = 0; i < instances.size(); i++) {
-        bb_dfs_seq(instances[i], bestBoard, bestPathLen, counter);
+        bbDfsSeq(instances[i], bestBoard, bestPathLen, counter);
     }
     return bestBoard;
 }
 
 int main(int argc, char **argv) {
+    MPI_Init(&argc, &argv);
+    int myRank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
     int bufLen = 1000;
     char *buf = new char[bufLen];
-    int my_rank;
-    int p;
 
-    /* start up MPI */
-    MPI_Init(&argc, &argv);
-
-    /* find out process rank */
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-
-    /* find out number of processes */
-    MPI_Comm_size(MPI_COMM_WORLD, &p);
-
-    if (p == 0) { // master process
-        ChessBoard initBoard = ChessBoard(argv[0]);
-        ChessBoard bestBoard(initBoard);
+    if (myRank == 0) { // master process
+        int processCount;
+        MPI_Comm_size(MPI_COMM_WORLD, &processCount);
+        ChessBoard startBoard = ChessBoard(argv[0]);
+        ChessBoard bestBoard(startBoard);
         int bestPathLen = numeric_limits<int>::max();
-        vector<Instance *> insList = generateInstances(initBoard, 0, HORSE);
+        vector<Instance *> insList = generateInstancesFrom(startBoard, 0, HORSE);
         size_t insHead = 0;
         int runningSlaves = 0;
-        int msgLen;
+        int msgLen = -1;
 
         // send initial work to each slave
-        for (int i = 1; i < p && insHead < insList.size(); i++) {
+        for (int i = 1; i < processCount && insHead < insList.size(); i++) {
             insList[insHead]->serializeToBuffer(&buf, bufLen, msgLen);
-            MPI_Send(buf, msgLen, MPI_CHAR, p, MessageTag::WORK, MPI_COMM_WORLD);
+            MPI_Send(buf, msgLen, MPI_CHAR, i, MessageTag::WORK, MPI_COMM_WORLD);
             runningSlaves++;
             insHead++;
         }
 
         // check for finished work from slaves
-        // send message to all slaves if best solution is updated
         int flag;
         MPI_Status status;
         while (true) {
             MPI_Iprobe(MPI_ANY_SOURCE, MessageTag::DONE, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
-                // receive & deserialize board
+                // receive & deserialize solution board
                 MPI_Get_count(&status, MPI_CHAR, &msgLen);
                 ensureBufferSize(&buf, bufLen, msgLen);
                 MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
@@ -579,7 +571,7 @@ int main(int argc, char **argv) {
                 if (receivedBoard.getPathLen() < bestPathLen) {
                     bestBoard = receivedBoard;
                     bestPathLen = receivedBoard.getPathLen();
-                    for (int i = 1; i < p; i++) {
+                    for (int i = 1; i < processCount; i++) {
                         if (i != status.MPI_SOURCE) {
                             MPI_Send(&bestPathLen, 1, MPI_INT, i, MessageTag::UPDATE, MPI_COMM_WORLD);
                         }
@@ -608,7 +600,7 @@ int main(int argc, char **argv) {
 
         cout << startingBoard << endl;
         auto start = chrono::high_resolution_clock::now();
-        bb_dfs_data_par(new ChessBoard(filename), bestPathLenGlobal, &startingBoard, counter);
+        bbDfsDataPar(new ChessBoard(filename), bestPathLenGlobal, &startingBoard, counter);
         auto stop = chrono::high_resolution_clock::now();
 
         cout << "Cena\tPočet volání\tČas [ms]" << endl;
@@ -630,6 +622,7 @@ int main(int argc, char **argv) {
         long counterSlave = 0;
         int msgLen;
 
+        // TODO run one thread that will check for messages with results
         while (true) {
             MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
@@ -642,7 +635,7 @@ int main(int argc, char **argv) {
                     ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
 
                     // run
-                    ChessBoard bestBoard = bb_dfs_data_par(receivedBoard, bestPathLenSlave, counterSlave);
+                    ChessBoard bestBoard = bbDfsDataPar(receivedBoard, bestPathLenSlave, counterSlave);
 
                     // send result
                     bestBoard.serializeToBuffer(&buf, bufLen, msgLen);
