@@ -704,9 +704,10 @@ int main(int argc, char **argv) {
     if (myRank == 0) { // master process
         int processCount;
         MPI_Comm_size(MPI_COMM_WORLD, &processCount);
-        ChessBoard startBoard = ChessBoard(argv[0]);
+        ChessBoard startBoard = ChessBoard(argv[1]);
         ChessBoard bestBoard(startBoard);
         int bestPathLen = numeric_limits<int>::max();
+        cout << startBoard << endl;
         vector<Instance *> insList = generateInstancesFrom(startBoard, 0, HORSE);
         size_t insHead = 0;
         int runningSlaves = 0;
