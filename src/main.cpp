@@ -431,7 +431,11 @@ public:
     }
 
     int getPathLen() const {
-        return moveLog.size();
+        if (getPawnCnt() != 0) {
+            return numeric_limits<int>::max();
+        } else {
+            return moveLog.size();
+        }
     }
 };
 
