@@ -335,6 +335,8 @@ public:
         memcpy(&moveLogSize, head, sizeof(moveLogSize));
         head += sizeof(moveLogSize);
 
+        // TODO remove printing
+        /*
         cout << "==============================" << endl;
         cout << "size=" << size << endl;
         cout << "rowLen=" << rowLen << endl;
@@ -344,6 +346,7 @@ public:
         cout << "Bishop=" << bishop.getCol() << "," << bishop.getRow() << ", type=" << bishop.getType() << endl;
         cout << "Horse=" << horse.getCol() << ", " << horse.getRow() << ", type=" << horse.getType() << endl;
         cout << "==============================" << endl << endl;
+         */
 
         vector<ChessMove> moveLog(moveLogSize);
         for (int i = 0; i < moveLogSize; i++) {
@@ -694,7 +697,8 @@ vector<Instance *> generateInstancesFrom(const Instance &initInstance) {
         }
         instances = instancesNext;
     }
-    cout << "Vygenerováno " << instances.size() << " instancí pro počet epoch " << EPOCH_CNT << "." << endl << endl;
+    // TODO
+    // cout << "Vygenerováno " << instances.size() << " instancí pro počet epoch " << EPOCH_CNT << "." << endl << endl;
     return instances;
 }
 
@@ -724,18 +728,16 @@ int main(int argc, char **argv) {
         cout << startInstance.board << endl;
         vector<Instance *> insList = generateInstancesFrom(startInstance);
         size_t insHead = 0;
-        int runningSlaves = 0;
         int msgLen = -1;
+        int slaveTerminatedCnt = 0;
 
         cout << "Počet slave procesů: " << processCount - 1 << endl;
 
         // send initial work to each slave
-        for (int i = 1; i < processCount && insHead < insList.size(); i++) {
+        for (int i = 1; i < processCount; i++) {
             insList[insHead]->serializeToBuffer(buf, bufLen, msgLen);
-            cout << myRank << ": Posílam první instanci (" << msgLen << " bajtů) procesu číslo " << i << " ---> ";
+            cout << myRank << ": Posílam první instanci (" << msgLen << " bajtů) procesu " << i << endl;
             MPI_Send(buf, msgLen, MPI_CHAR, i, MessageTag::WORK, MPI_COMM_WORLD);
-            cout << "OK" << endl;
-            runningSlaves++;
             insHead++;
         }
 
@@ -750,6 +752,9 @@ int main(int argc, char **argv) {
                 MPI_Recv(&buf[0], msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                          MPI_STATUS_IGNORE);
                 ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
+                cout << myRank << ": Dostal jsem vyřešenou instaci od procesu " << status.MPI_SOURCE
+                     << " s délkou cesty " << receivedBoard.getPathLen() <<
+                     " (my best=" << bestPathLen << ")" << endl;
 
                 // update best solution
                 if (receivedBoard.getPathLen() < bestPathLen) {
@@ -758,24 +763,24 @@ int main(int argc, char **argv) {
                     for (int i = 1; i < processCount; i++) {
                         if (i != status.MPI_SOURCE) {
                             MPI_Send(&bestPathLen, 1, MPI_INT, i, MessageTag::UPDATE, MPI_COMM_WORLD);
+                            cout << myRank << ": Odeslal jsem nové nejlepší řešení " << bestPathLen << " proceu " << i
+                                 << endl;
                         }
                     }
                 }
 
                 // send next work
-                // or
-                // send finish flag if there is no more work
                 if (insHead < insList.size()) {
                     insList[insHead]->serializeToBuffer(buf, bufLen, msgLen);
                     MPI_Send(buf, msgLen, MPI_CHAR, status.MPI_SOURCE, MessageTag::WORK, MPI_COMM_WORLD);
                     insHead++;
-                } else {
+                } else { // send finish flag if there is no more work
                     MPI_Send(&bestPathLen, 1, MPI_INT, status.MPI_SOURCE, MessageTag::FINISHED,
                              MPI_COMM_WORLD);
-                    runningSlaves--;
+                    slaveTerminatedCnt++;
                 }
 
-                if (runningSlaves == 0) break;
+                if (slaveTerminatedCnt == processCount) break;
             }
         }
 
@@ -790,7 +795,7 @@ int main(int argc, char **argv) {
         long counterSlave = 0;
         int msgLen = -1;
 
-        cout << myRank << ": Čekám na první zprávu" << endl;
+        cout << myRank << ": Čekém na přidělení první instance" << endl;
 
         // TODO run one thread that will check for messages with results
         while (true) {
@@ -799,11 +804,10 @@ int main(int argc, char **argv) {
                 if (status.MPI_TAG == MessageTag::WORK) {
                     // receive & deserializeFromBuffer message
                     MPI_Get_count(&status, MPI_CHAR, &msgLen);
-                    cout << myRank << ": " << "Dostal jsem novou práci (" << msgLen << " bajtů)" << endl;
+                    cout << myRank << ": " << "Dostal jsem instanci (" << msgLen << " bajtů) k vyřešení" << endl;
                     MPI_Recv(buf, msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                              MPI_STATUS_IGNORE);
                     Instance receivedInstance = Instance::deserializeFromBuffer(buf, msgLen);
-                    cout << myRank << ": " << "Úspěšně jsem deserializoval novou práci" << endl;
 
                     // run
                     ChessBoard bestBoard = bbDfsDataPar(receivedInstance, bestPathLenSlave, counterSlave);
@@ -811,7 +815,10 @@ int main(int argc, char **argv) {
                     // send result
                     bestBoard.serializeToBuffer(buf, bufLen, msgLen);
                     MPI_Send(buf, msgLen, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
+                    cout << myRank << ": " << "Odeslal jsem vyřešenou instanci s délkou cesty " << bestPathLenSlave
+                         << "=" << bestBoard.getPathLen() << endl;
                 } else if (status.MPI_TAG == MessageTag::FINISHED) {
+                    cout << myRank << ": " << "Ukončuji se, master nemá další instance k vyřešení" << endl;
                     break;
                 }
             }
