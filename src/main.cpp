@@ -718,9 +718,10 @@ ChessBoard bbDfsDataPar(const Instance &startInstance, long &bestPathLen, long &
 
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
-    int myRank, processCount;
+    int myRank, processCount, slaveCnt;
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     MPI_Comm_size(MPI_COMM_WORLD, &processCount);
+    slaveCnt = processCount - 1;
 
     const int bufLen = 1000000;
     char buf[bufLen];
@@ -733,9 +734,9 @@ int main(int argc, char **argv) {
         vector<Instance *> insList = generateInstancesFrom(startInstance);
         size_t insHead = 0;
         int msgLen = -1;
-        int slaveTerminatedCnt = 0;
+        int slaveCntTerminated = 0;
 
-        cout << "Počet slave procesů: " << processCount - 1 << endl;
+        cout << "Počet slave procesů: " << slaveCnt << endl;
 
         // send initial work to each slave
         for (int i = 1; i < processCount; i++) {
@@ -781,11 +782,10 @@ int main(int argc, char **argv) {
                 } else { // send finish flag if there is no more work
                     MPI_Send(&bestPathLen, 1, MPI_INT, status.MPI_SOURCE, MessageTag::FINISHED,
                              MPI_COMM_WORLD);
-                    slaveTerminatedCnt++;
+                    slaveCntTerminated++;
                 }
-
-                if (slaveTerminatedCnt == processCount) break;
             }
+            if (slaveCntTerminated == slaveCnt) break;
         }
 
         cout << bestBoard << endl;
