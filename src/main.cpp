@@ -322,18 +322,31 @@ public:
         memcpy(&maxDepth, head, sizeof(maxDepth));
         head += sizeof(maxDepth);
 
+
         char *grid = new char[size];
         memcpy(grid, head, size);
         head += size;
+
 
         ChessPiece bishop = ChessPiece::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
         head += cnt;
         ChessPiece horse = ChessPiece::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
         head += cnt;
 
+
         int moveLogSize;
         memcpy(&moveLogSize, head, sizeof(moveLogSize));
         head += sizeof(moveLogSize);
+
+        cout << "==============================" << endl;
+        cout << "size=" << size << endl;
+        cout << "rowLen=" << rowLen << endl;
+        cout << "panwCnt=" << pawnCnt << endl;
+        cout << "minDepth=" << minDepth << endl;
+        cout << "maxDepth=" << maxDepth << endl;
+        cout << "Bishop=" << bishop.getCol() << ", " << bishop.getRow() << "type:" << bishop.getType() << endl;
+        cout << "Horse=" << horse.getCol() << ", " << horse.getRow() << "type:" << horse.getType() << endl;
+        cout << "==============================" << endl << endl;
 
         vector<ChessMove> moveLog(moveLogSize);
         for (int i = 0; i < moveLogSize; i++) {
@@ -442,6 +455,11 @@ struct Instance {
         head += cnt;
 
         written = head - buf;
+    }
+
+    static Instance deserializeFromBuffer(char *buf, int bufLen) {
+        int read;
+        return deserializeFromBuffer(buf, bufLen, read);
     }
 
     static Instance deserializeFromBuffer(char *buf, int bufLen, int &read) {
@@ -656,9 +674,9 @@ void bbDfsSeq(Instance *ins, ChessBoard &bestBoard, long &bestPathLen, long &cou
     counter++;
 }
 
-vector<Instance *> generateInstancesFrom(const ChessBoard &initBoard, int initDepth, char initPlay) {
+vector<Instance *> generateInstancesFrom(const Instance &initInstance) {
     vector<Instance *> instances = vector<Instance *>();
-    instances.emplace_back(new Instance(initBoard, initDepth, initPlay));
+    instances.emplace_back(new Instance(initInstance));
 
     for (int i = 0; i < EPOCH_CNT; i++) {
         vector<Instance *> instancesNext = vector<Instance *>();
@@ -683,9 +701,9 @@ vector<Instance *> generateInstancesFrom(const ChessBoard &initBoard, int initDe
     return instances;
 }
 
-ChessBoard bbDfsDataPar(const ChessBoard &startBoard, long &bestPathLen, long &counter) {
-    vector<Instance *> instances = generateInstancesFrom(startBoard, 0, BISHOP);
-    ChessBoard bestBoard(startBoard);
+ChessBoard bbDfsDataPar(const Instance &startInstance, long &bestPathLen, long &counter) {
+    vector<Instance *> instances = generateInstancesFrom(startInstance);
+    ChessBoard bestBoard(startInstance.board);
 #pragma omp parallel for shared(instances, bestBoard, bestPathLen, counter) schedule(dynamic) default(none)
     for (unsigned long i = 0; i < instances.size(); i++) {
         bbDfsSeq(instances[i], bestBoard, bestPathLen, counter);
@@ -703,11 +721,11 @@ int main(int argc, char **argv) {
     char buf[bufLen];
 
     if (myRank == 0) { // master process
-        ChessBoard startBoard = ChessBoard(argv[1]);
-        ChessBoard bestBoard(startBoard);
+        Instance startInstance(ChessBoard(argv[1]), 0, HORSE);
+        ChessBoard bestBoard(startInstance.board);
         int bestPathLen = numeric_limits<int>::max();
-        cout << startBoard << endl;
-        vector<Instance *> insList = generateInstancesFrom(startBoard, 0, HORSE);
+        cout << startInstance.board << endl;
+        vector<Instance *> insList = generateInstancesFrom(startInstance);
         size_t insHead = 0;
         int runningSlaves = 0;
         int msgLen = -1;
@@ -803,10 +821,11 @@ int main(int argc, char **argv) {
                     cout << myRank << ": " << "Dostal jsem novou práci (" << msgLen << " bajtů)" << endl;
                     MPI_Recv(buf, msgLen, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD,
                              MPI_STATUS_IGNORE);
-                    ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
+                    Instance receivedInstance = Instance::deserializeFromBuffer(buf, msgLen);
+                    cout << myRank << ": " << "Úspěšně jsem deserializoval novou práci" << endl;
 
                     // run
-                    ChessBoard bestBoard = bbDfsDataPar(receivedBoard, bestPathLenSlave, counterSlave);
+                    ChessBoard bestBoard = bbDfsDataPar(receivedInstance, bestPathLenSlave, counterSlave);
 
                     // send result
                     bestBoard.serializeToBuffer(buf, bufLen, msgLen);
