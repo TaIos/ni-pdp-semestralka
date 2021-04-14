@@ -443,8 +443,10 @@ struct Instance {
     ChessBoard board;
     int depth;
     char play;
+    int bestPathLen;
 
-    Instance(const ChessBoard &board, int depth, char play) : board(board), depth(depth), play(play) {}
+    Instance(const ChessBoard &board, int depth, char play, int bestPathLen) : board(board), depth(depth), play(play),
+                                                                               bestPathLen(bestPathLen) {}
 
     void serializeToBuffer(char *buf, int bufLen, int &written) {
         char *head = buf;
@@ -452,6 +454,9 @@ struct Instance {
 
         memcpy(head, &depth, sizeof(depth));
         head += sizeof(depth);
+
+        memcpy(head, &bestPathLen, sizeof(bestPathLen));
+        head += sizeof(bestPathLen);
 
         *(head++) = play;
 
@@ -474,13 +479,17 @@ struct Instance {
         memcpy(&depth, head, sizeof(depth));
         head += sizeof(depth);
 
+        int bestPathLen;
+        memcpy(&bestPathLen, head, sizeof(bestPathLen));
+        head += sizeof(bestPathLen);
+
         char play = *(head++);
 
         ChessBoard board = ChessBoard::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
         head += cnt;
 
         read = head - buf;
-        return Instance(board, depth, play);
+        return Instance(board, depth, play, bestPathLen);
     }
 };
 
@@ -663,13 +672,13 @@ void bbDfsSeq(Instance *ins, ChessBoard &bestBoard, long &bestPathLen, long &cou
             for (const auto &m : NextPossibleMoves::for_horse(ins->board)) {
                 ChessBoard cpy(ins->board);
                 cpy.moveHorse(m.row, m.col);
-                bbDfsSeq(new Instance(cpy, ins->depth + 1, BISHOP), bestBoard, bestPathLen, counter);
+                bbDfsSeq(new Instance(cpy, ins->depth + 1, BISHOP, bestPathLen), bestBoard, bestPathLen, counter);
             }
         } else if (ins->play == BISHOP) {
             for (const auto &m : NextPossibleMoves::for_bishop(ins->board)) {
                 ChessBoard cpy(ins->board);
                 cpy.moveBishop(m.row, m.col);
-                bbDfsSeq(new Instance(cpy, ins->depth + 1, HORSE), bestBoard, bestPathLen, counter);
+                bbDfsSeq(new Instance(cpy, ins->depth + 1, HORSE, bestPathLen), bestBoard, bestPathLen, counter);
             }
         }
     }
@@ -690,13 +699,13 @@ vector<Instance *> generateInstancesFrom(const Instance &initInstance, ChessBoar
                 for (const auto &m : NextPossibleMoves::for_horse(ins->board)) {
                     ChessBoard cpy(ins->board);
                     cpy.moveHorse(m.row, m.col);
-                    instancesNext.emplace_back(new Instance(cpy, ins->depth + 1, BISHOP));
+                    instancesNext.emplace_back(new Instance(cpy, ins->depth + 1, BISHOP, numeric_limits<int>::max()));
                 }
             } else if (ins->play == BISHOP) {
                 for (const auto &m : NextPossibleMoves::for_bishop(ins->board)) {
                     ChessBoard cpy(ins->board);
                     cpy.moveBishop(m.row, m.col);
-                    instancesNext.emplace_back(new Instance(cpy, ins->depth + 1, HORSE));
+                    instancesNext.emplace_back(new Instance(cpy, ins->depth + 1, HORSE, numeric_limits<int>::max()));
                 }
             }
         }
@@ -709,8 +718,6 @@ vector<Instance *> generateInstancesFrom(const Instance &initInstance, ChessBoar
         }
         instances = instancesNext;
     }
-    // TODO
-    // cout << "Vygenerováno " << instances.size() << " instancí pro počet epoch " << EPOCH_CNT << "." << endl << endl;
     return instances;
 }
 
@@ -744,7 +751,7 @@ int main(int argc, char **argv) {
     char buf[bufLen];
 
     if (myRank == 0) { // master process
-        Instance startInstance(ChessBoard(argv[1]), 0, BISHOP);
+        Instance startInstance(ChessBoard(argv[1]), 0, BISHOP, numeric_limits<int>::max());
         ChessBoard bestBoard(startInstance.board);
         int bestPathLen = numeric_limits<int>::max();
         cout << startInstance.board << endl;
@@ -754,6 +761,7 @@ int main(int argc, char **argv) {
             bestPathLen = earlyBoard->getPathLen();
             bestBoard = *earlyBoard;
             delete earlyBoard;
+            for (const auto &ins : insList) ins->bestPathLen = earlyBoard->getPathLen();
         }
         size_t insHead = 0;
         int msgLen = -1;
@@ -800,6 +808,7 @@ int main(int argc, char **argv) {
 
                 // send next work
                 if (insHead < insList.size()) {
+                    insList[insHead]->bestPathLen = bestPathLen;
                     insList[insHead]->serializeToBuffer(buf, bufLen, msgLen);
                     MPI_Send(buf, msgLen, MPI_CHAR, status.MPI_SOURCE, MessageTag::WORK, MPI_COMM_WORLD);
                     insHead++;
@@ -829,7 +838,6 @@ int main(int argc, char **argv) {
 
         cout << myRank << ": Čekém na přidělení první instance" << endl;
 
-        // TODO run one thread that will check for messages with results
         while (true) {
             MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
             if (flag) {
@@ -842,7 +850,7 @@ int main(int argc, char **argv) {
                     Instance receivedInstance = Instance::deserializeFromBuffer(buf, msgLen);
 
                     // run
-                    long bestPathLenSlave = numeric_limits<int>::max();
+                    long bestPathLenSlave = receivedInstance.bestPathLen;
                     ChessBoard bestBoard = bbDfsDataPar(receivedInstance, bestPathLenSlave, counterSlave);
 
                     // send result
