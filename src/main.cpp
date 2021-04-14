@@ -727,7 +727,7 @@ int main(int argc, char **argv) {
     char buf[bufLen];
 
     if (myRank == 0) { // master process
-        Instance startInstance(ChessBoard(argv[1]), 0, HORSE);
+        Instance startInstance(ChessBoard(argv[1]), 0, BISHOP);
         ChessBoard bestBoard(startInstance.board);
         int bestPathLen = numeric_limits<int>::max();
         cout << startInstance.board << endl;
