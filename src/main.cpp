@@ -759,7 +759,7 @@ int main(int argc, char **argv) {
                 ChessBoard receivedBoard = ChessBoard::deserializeFromBuffer(buf, msgLen);
                 cout << myRank << ": Dostal jsem vyřešenou instaci od procesu " << status.MPI_SOURCE
                      << " s délkou cesty " << receivedBoard.getPathLen() <<
-                     " (my best=" << bestPathLen << ")" << endl;
+                     " (best=" << bestPathLen << ")" << endl;
 
                 // update best solution
                 if (receivedBoard.getPathLen() < bestPathLen) {
@@ -788,7 +788,12 @@ int main(int argc, char **argv) {
             if (slaveCntTerminated == slaveCnt) break;
         }
 
-        cout << bestBoard << endl;
+        cout << "===========ŘEŠENÍ============" << endl;
+        cout << "Počet tahů: " << bestBoard.getMoveLog().size() << endl;
+        for (const auto &move : bestBoard.getMoveLog()) {
+            cout << move << endl;
+        }
+        cout << "==============================" << endl;
 
         // cleanup
         for (const auto &ins : insList) delete ins;
@@ -819,8 +824,8 @@ int main(int argc, char **argv) {
                     // send result
                     bestBoard.serializeToBuffer(buf, bufLen, msgLen);
                     MPI_Send(buf, msgLen, MPI_CHAR, 0, MessageTag::DONE, MPI_COMM_WORLD);
-                    cout << myRank << ": " << "Odeslal jsem vyřešenou instanci s délkou cesty " << bestPathLenSlave
-                         << "=" << bestBoard.getPathLen() << endl;
+                    cout << myRank << ": " << "Odeslal jsem vyřešenou instanci s délkou cesty "
+                         << bestBoard.getPathLen() << endl;
                 } else if (status.MPI_TAG == MessageTag::FINISHED) {
                     cout << myRank << ": " << "Ukončuji se, master nemá další instance k vyřešení" << endl;
                     break;
