@@ -678,9 +678,10 @@ void bbDfsSeq(Instance *ins, ChessBoard &bestBoard, long &bestPathLen, long &cou
     counter++;
 }
 
-vector<Instance *> generateInstancesFrom(const Instance &initInstance) {
+vector<Instance *> generateInstancesFrom(const Instance &initInstance, ChessBoard **earlySolution) {
     vector<Instance *> instances = vector<Instance *>();
     instances.emplace_back(new Instance(initInstance));
+    *earlySolution = nullptr; // in case solution is found during generating instances
 
     for (int i = 0; i < EPOCH_CNT; i++) {
         vector<Instance *> instancesNext = vector<Instance *>();
@@ -699,6 +700,13 @@ vector<Instance *> generateInstancesFrom(const Instance &initInstance) {
                 }
             }
         }
+        if (!(*earlySolution)) {
+            for (const auto &ins : instances) {
+                if (ins->board.getPawnCnt() == 0) {
+                    *earlySolution = new ChessBoard(ins->board);
+                }
+            }
+        }
         instances = instancesNext;
     }
     // TODO
@@ -707,13 +715,22 @@ vector<Instance *> generateInstancesFrom(const Instance &initInstance) {
 }
 
 ChessBoard bbDfsDataPar(const Instance &startInstance, long &bestPathLen, long &counter) {
-    vector<Instance *> instances = generateInstancesFrom(startInstance);
-    ChessBoard bestBoard(startInstance.board);
+    ChessBoard *earlySolution = nullptr;
+    vector<Instance *> instances = generateInstancesFrom(startInstance, &earlySolution);
+    if (!earlySolution) {
+        ChessBoard bestBoard(startInstance.board);
 #pragma omp parallel for shared(instances, bestBoard, bestPathLen, counter) schedule(dynamic) default(none)
-    for (unsigned long i = 0; i < instances.size(); i++) {
-        bbDfsSeq(instances[i], bestBoard, bestPathLen, counter);
+        for (unsigned long i = 0; i < instances.size(); i++) {
+            bbDfsSeq(instances[i], bestBoard, bestPathLen, counter);
+        }
+        return bestBoard;
+    } else {
+        ChessBoard bestBoard = ChessBoard(*earlySolution);
+        bestPathLen = bestBoard.getPathLen();
+        delete earlySolution;
+        return bestBoard;
     }
-    return bestBoard;
+
 }
 
 int main(int argc, char **argv) {
@@ -731,12 +748,19 @@ int main(int argc, char **argv) {
         ChessBoard bestBoard(startInstance.board);
         int bestPathLen = numeric_limits<int>::max();
         cout << startInstance.board << endl;
-        vector<Instance *> insList = generateInstancesFrom(startInstance);
+        ChessBoard *earlyBoard = nullptr;
+        vector<Instance *> insList = generateInstancesFrom(startInstance, &earlyBoard);
+        if (earlyBoard) {
+            bestPathLen = earlyBoard->getPathLen();
+            bestBoard = *earlyBoard;
+            delete earlyBoard;
+        }
         size_t insHead = 0;
         int msgLen = -1;
         int slaveCntTerminated = 0;
 
         cout << "Počet slave procesů: " << slaveCnt << endl;
+        cout << "Počet vygenerovaných instancí: " << insList.size() << endl;
 
         // send initial work to each slave
         for (int i = 1; i < processCount; i++) {
