@@ -797,16 +797,9 @@ int main(int argc, char **argv) {
                 if (receivedBoard.getPathLen() < bestPathLen) {
                     bestBoard = receivedBoard;
                     bestPathLen = receivedBoard.getPathLen();
-                    for (int i = 1; i < processCount; i++) {
-                        if (i != status.MPI_SOURCE) {
-                            MPI_Send(&bestPathLen, 1, MPI_INT, i, MessageTag::UPDATE, MPI_COMM_WORLD);
-                            cout << myRank << ": Odeslal jsem nové nejlepší řešení " << bestPathLen << " proceu " << i
-                                 << endl;
-                        }
-                    }
                 }
 
-                // send next work
+                // send next work if there is any
                 if (insHead < insList.size()) {
                     insList[insHead]->bestPathLen = bestPathLen;
                     insList[insHead]->serializeToBuffer(buf, bufLen, msgLen);
