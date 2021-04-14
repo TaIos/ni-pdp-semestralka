@@ -791,7 +791,6 @@ int main(int argc, char **argv) {
     } else { // slave process
         int flag;
         MPI_Status status;
-        long bestPathLenSlave = numeric_limits<int>::max();
         long counterSlave = 0;
         int msgLen = -1;
 
@@ -810,6 +809,7 @@ int main(int argc, char **argv) {
                     Instance receivedInstance = Instance::deserializeFromBuffer(buf, msgLen);
 
                     // run
+                    long bestPathLenSlave = numeric_limits<int>::max();
                     ChessBoard bestBoard = bbDfsDataPar(receivedInstance, bestPathLenSlave, counterSlave);
 
                     // send result
