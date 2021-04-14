@@ -779,24 +779,6 @@ int main(int argc, char **argv) {
             }
         }
 
-        /*
-        long counter = 0;
-
-        cout << startingBoard << endl;
-        auto start = chrono::high_resolution_clock::now();
-        bbDfsDataPar(new ChessBoard(filename), bestPathLenGlobal, &startingBoard, counter);
-        auto stop = chrono::high_resolution_clock::now();
-
-        cout << "Cena\tPočet volání\tČas [ms]" << endl;
-        cout << bestPathLenGlobal << "\t" << counter << "\t\t"
-             << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << endl << endl;
-
-        cout << "Tahy" << endl;
-        for (const auto &move : startingBoard.getMoveLog()) {
-            cout << move << endl;
-        }
-         */
-
         cout << bestBoard << endl;
 
         // cleanup
