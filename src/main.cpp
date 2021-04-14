@@ -326,12 +326,10 @@ public:
         memcpy(grid, head, size);
         head += size;
 
-
         ChessPiece bishop = ChessPiece::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
         head += cnt;
         ChessPiece horse = ChessPiece::deserializeFromBuffer(head, bufLen - (head - buf), cnt);
         head += cnt;
-
 
         int moveLogSize;
         memcpy(&moveLogSize, head, sizeof(moveLogSize));
@@ -343,8 +341,8 @@ public:
         cout << "panwCnt=" << pawnCnt << endl;
         cout << "minDepth=" << minDepth << endl;
         cout << "maxDepth=" << maxDepth << endl;
-        cout << "Bishop=" << bishop.getCol() << ", " << bishop.getRow() << "type:" << bishop.getType() << endl;
-        cout << "Horse=" << horse.getCol() << ", " << horse.getRow() << "type:" << horse.getType() << endl;
+        cout << "Bishop=" << bishop.getCol() << "," << bishop.getRow() << ", type=" << bishop.getType() << endl;
+        cout << "Horse=" << horse.getCol() << ", " << horse.getRow() << ", type=" << horse.getType() << endl;
         cout << "==============================" << endl << endl;
 
         vector<ChessMove> moveLog(moveLogSize);
@@ -798,6 +796,8 @@ int main(int argc, char **argv) {
             cout << move << endl;
         }
          */
+
+        cout << bestBoard << endl;
 
         // cleanup
         for (const auto &ins : insList) delete ins;
