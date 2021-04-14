@@ -275,10 +275,10 @@ public:
         memcpy(head, grid, size);
         head += size;
 
-        bishop.serializeToBuffer(buf, bufLen - (head - buf), cnt);
+        bishop.serializeToBuffer(head, bufLen - (head - buf), cnt);
         head += cnt;
 
-        horse.serializeToBuffer(buf, bufLen - (head - buf), cnt);
+        horse.serializeToBuffer(head, bufLen - (head - buf), cnt);
         head += cnt;
 
         int moveLogSize = moveLog.size();
@@ -286,7 +286,7 @@ public:
         head += sizeof(moveLogSize);
 
         for (int i = 0; i < moveLogSize; i++) {
-            moveLog[i].serializeToBuffer(buf, bufLen - (head - buf), cnt);
+            moveLog[i].serializeToBuffer(head, bufLen - (head - buf), cnt);
             head += cnt;
         }
 
@@ -321,7 +321,6 @@ public:
         int maxDepth;
         memcpy(&maxDepth, head, sizeof(maxDepth));
         head += sizeof(maxDepth);
-
 
         char *grid = new char[size];
         memcpy(grid, head, size);
@@ -451,7 +450,7 @@ struct Instance {
 
         *(head++) = play;
 
-        board.serializeToBuffer(buf, bufLen - (head - buf), cnt);
+        board.serializeToBuffer(head, bufLen - (head - buf), cnt);
         head += cnt;
 
         written = head - buf;
