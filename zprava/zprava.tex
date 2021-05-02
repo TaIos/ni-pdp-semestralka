@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage{minted}
 \usepackage{cprotect}
+\usepackage{hyperref}
 \oddsidemargin=-5mm
 \evensidemargin=-5mm\marginparwidth=.08in \marginparsep=.01in
 \marginparpush=5pt\topmargin=-15mm\headheight=12pt
@@ -12,9 +13,16 @@
 \renewcommand{\figurename}{Obrázek}
 \usepackage{fancyvrb}
 \usepackage{listings}
-
-
+\usepackage[czech]{babel}
 \newcommand{\heuristika}[1]{\textbf{\textit{Heuristika {#1}.}}}
+\newcommand{\const}[1]{\mintinline{bash}{#1}}
+\newcommand{\konstanta}[1]{\textbf{\textit{Konstanta}} \const{#1}.}
+
+% minted centering
+\usepackage{xpatch,letltxmacro}
+\LetLtxMacro{\cminted}{\minted}
+\let\endcminted\endminted
+\xpretocmd{\cminted}{\RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}}{}{}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %http://ftp.cvut.cz/tex-archive/macros/latex/contrib/algorithm2e/doc/algorithm2e.pdf
@@ -25,26 +33,34 @@
 
 \begin{document}
     \begin{center}
-        \bf Semestralni projekt MI-PDP 2020/2021:\\[5mm]
-        Paralelni algoritmus pro reseni problemu\\[5mm]
+        \bf Semestrální projekt MI-PDP 2020/2021:\\[5mm]
+        Paralelní algoritmus pro řesení problému prohledávání stavového prostoru\\[5mm]
         Martin Šafránek\\[2mm]
-        magisterske studijum, FIT CVUT, Thakurova 9, 160 00 Praha 6\\[2mm]
+        magisterské studijum, FIT ČVUT, Thákurova 9, 160 00 Praha 6\\[2mm]
+        zdrojové kódy:\\ \url{https://github.com/TaIos/ni-pdp-semestralka}\\[2mm]
         \today
     \end{center}
 
 
-    \section{Definice problemu a popis sekvencniho algoritmu}
+    \label{sec:sequential}
+
+
+    \section{Definice problému a popis sekvenčního algoritmu}
 
     Program řeší problém nalezení optimální posloupnosti tahů pro střelce a jezdce, která vede k sebrání
     všech pěšců rozmístěných na šachovnici. Jedná se o analogii problému obchodního cestujícího.
     Nalezení optimálního řešení je proto NP těžký úkol. Řešení v této práci používá bruteforce
     s heuristikami pro ořezávání stavového prostoru.
+    \newline
 
-    Příklad vstupu je na obrázku \ref{fig:board-example}. Obsahuje vždy
+    \label{subsec:popis-vstupu}
+
+    \subsection{Popis vstupu}
+    Příklad vstupu je uveden na obrázku \ref{fig:board-example}. Obsahuje popořadě vždy
     \begin{enumerate}
         \item přirozené číslo $k$, reprezentující délku strany šachovnice $S$ o velikosti $k \times k$,
-        \item pole souřadnic rozmístěných figurek na šachovnici S,
-        \item horní mez délky optimální posloupnosti $d^{*}_{max}$.
+        \item horní mez délky optimální posloupnosti $d^{*}_{max}$,
+        \item pole souřadnic rozmístěných figurek na šachovnici S.
     \end{enumerate}
 
     \begin{figure}[h]
@@ -70,13 +86,17 @@
         \label{fig:board-example}
     \end{figure}
 
-    Sekvenční algoritmus je popsán v \ref{alg:sequential}. Používá dvě heuristiky.
+
+    \label{subsec:seq-heuristics}
+
+    \subsection{Heuristiky}
+
+    Sekvenční algoritmus používá dvě heuristiky pro pohyb střelce a koně.
 
     \heuristika{střelec} Z množiny možných políček, kam je možné střelce přemístit jsou preferována ty,
     která obsahují pěšce. Pokud takové políčko neexistuje, jsou preferována políčka s alespoň jedním pěšákem
     na diagonále. Jinak se pohyb střelce rozhodne náhodně.
-    \hspace{1pt}
-
+    \hspace{1.5pt}
 
     \heuristika{kůň} Z množiny možných políček, kam je možné koně přemístit jsou preferována ty,
     která obsahují pěšce. Pokud takové políčko neexistuje, jsou preferována políčka, z kterých
@@ -84,6 +104,7 @@
     preferováno políčka, z kterých kůň v následujícíh dvou tazích může vzít pěšáka.
     Jinak se pohyb koně rozhodne náhodně.
 
+    \subsection{Pseudokód}
     \begin{algorithm}[H]
         \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
         \SetAlgorithmName{Algoritmus}
@@ -109,7 +130,10 @@
         \label{alg:sequential}
     \end{algorithm}
 
-    \section{Popis paralelniho algoritmu a jeho implementace v OpenMP - taskovy paralelismus}
+    \label{sec:task-par}
+
+
+    \section{Popis paralelního algoritmu a jeho implementace v OpenMP - taskový paralelismus}
 
     Popiste paralelni algoritmus, opet vyjdete ze zadani a presne vymezte
     odchylky, ktere pri implementaci OpenMP pouzivate.
@@ -120,8 +144,62 @@
     konstanty a parametry pro skalovani algoritmu. Struktura a semantika
     prikazove radky pro spousteni programu.
 
+    Taskový paralelní algoritmus je naimplementován pomocí OpenMP. Hlavní rozdíl oproti sekvenčnímu algoritmu
+    popsaném v \ref{sec:sequential} je rozdělení úlohy prohledávání stavového prostoru na tasky. Task je
+    základní jednotka, kterou je OpenMP schopno přidělit vláknu a provést tak výpočet. Pro zadanou úlohu
+    task znamená šachovnici s pozicí všech figurek a historií tahů. Takto vytvořené tasky OpenMP přidává
+    do svého taskpoolu, z kterého si je vlákna vyzvedávají a řeší. Dále všechny vlákna řešící tasky z
+    taskpoolu sdílejí nejlepší řešení $d_{best}$. Heuristiky jsou totožné jako v podsekci \ref{subsec:seq-heuristics}.
 
-    \section{Popis paralelniho algoritmu a jeho implementace v OpenMP - datovy paralelismus}
+    \subsection{Konstanty a parametry pro škálování algoritmu}
+    Taskový paralelní algoritmus implementovaný pomocí OpenMP umožňuje nastavení konstant, které ovlivní
+    logiku funkce programu a tedy i výpočetní čas. Změněny byly pouze zde zmíněné konstanty. Jejich hodnota
+    byla určena empiricky na vstupních datech. Nejedná se o optimální hodnoty, protože jejich nalezení je
+    stejně těžký problém jako nalezení optimální cesty v původním problému.
+
+    \konstanta{TASK_THRESHOLD}  Pokud vlákno řeší instanci a délka její cesty je delší než \const{TASK_THRESHOLD}, nevytváří další
+    OpenMP tasky a nepřidává je do taskpoolu. Zadanou instaci vyřeší použitím sekvenčního algoritmu popsaném v sekci \ref{sec:sequential}.
+
+    \begin{table}[hb]
+        \centering
+        \begin{tabular}{|l|l|}
+            \hline
+            název                  & hodnota \\ \hline
+            \const{TASK_THRESHOLD} & 6       \\ \hline
+        \end{tabular}
+        \caption{Konstanty použité v OpenMP taskovém paralelismu.}
+        \label{tab:data-par-constants}
+    \end{table}
+
+    \subsection{Pseudokód}
+
+    \begin{algorithm}[H]
+        \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+        \SetAlgorithmName{Algoritmus}
+        \SetAlgoLined
+
+        \Input{$k\times k$ pole, mez $d^{*}_{max}$}
+        \Output{optimální posloupnost tahů}
+        \BlankLine
+
+        \eIf{abc or def}{
+
+        }\;
+        \While{While condition}{
+            instructions\;
+            \eIf{condition}{
+                instructions1\;
+                instructions2\;
+            }{
+                instructions3\;
+            }
+        }
+        \caption{OpenMP taskový paralelismus}
+        \label{alg:task-par}
+    \end{algorithm}
+
+
+    \section{Popis paralelniho algoritmu a jeho implementace v OpenMP - datový paralelismus}
 
     Popiste paralelni algoritmus, opet vyjdete ze zadani a presne vymezte
     odchylky, ktere pri implementaci OpenMP pouzivate.
@@ -132,8 +210,43 @@
     konstanty a parametry pro skalovani algoritmu. Struktura a semantika
     prikazove radky pro spousteni programu.
 
+    \subsection{Konstanty a parametry pro škálování algoritmu}
+    Leberkas ham bacon, pastrami turducken pork belly cupim salami kielbasa doner. Turkey cupim meatball capicola jowl cow shank chicken drumstick kevin salami swine pork belly. Drumstick leberkas corned beef beef short loin boudin. Turkey strip steak bacon, ball tip sirloin pork loin pork.
 
-    \section{Popis paralelniho algoritmu a jeho implementace v MPI}
+    \subsection{Pseudokód paralelního algoritmu — datový paralelismus}
+    Porchetta andouille flank kielbasa. Tail biltong turducken porchetta burgdoggen ground round shoulder ham, hamburger bacon shankle landjaeger fatback pork belly doner. Sirloin doner venison shankle cow, hamburger flank sausage pork belly. Tenderloin venison pancetta corned beef tongue cow pork belly capicola ball tip salami short ribs. Sirloin rump andouille tail shank fatback bresaola.
+
+    Leberkas ham bacon, pastrami turducken pork belly cupim salami kielbasa doner. Turkey cupim meatball capicola jowl cow shank chicken drumstick kevin salami swine pork belly. Drumstick leberkas corned beef beef short loin boudin. Turkey strip steak bacon, ball tip sirloin pork loin pork.
+
+    \subsection{Pseudokód}
+
+    \begin{algorithm}[H]
+        \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+        \SetAlgorithmName{Algoritmus}
+        \SetAlgoLined
+
+        \Input{$k\times k$ pole, mez $d^{*}_{max}$}
+        \Output{optimální posloupnost tahů}
+        \BlankLine
+
+        \eIf{abc or def}{
+
+        }\;
+        \While{While condition}{
+            instructions\;
+            \eIf{condition}{
+                instructions1\;
+                instructions2\;
+            }{
+                instructions3\;
+            }
+        }
+        \caption{OpenMP datový paralelismus}
+        \label{alg:data-par}
+    \end{algorithm}
+
+
+    \section{Popis paralelního algoritmu a jeho implementace v MPI}
 
     Popiste paralelni algoritmus, opet vyjdete ze zadani a presne vymezte
     odchylky, zvlaste u Master-Slave casti. Popiste a vysvetlete strukturu celkoveho
@@ -143,8 +256,38 @@
     konstanty a parametry pro skalovani algoritmu. Struktura a semantika
     prikazove radky pro spousteni programu.
 
+    \subsection{Konstanty a parametry pro škálování algoritmu}
+    Leberkas ham bacon, pastrami turducken pork belly cupim salami kielbasa doner. Turkey cupim meatball capicola jowl cow shank chicken drumstick kevin salami swine pork belly. Drumstick leberkas corned beef beef short loin boudin. Turkey strip steak bacon, ball tip sirloin pork loin pork.
 
-    \section{Namerene vysledky a vyhodnoceni}
+    \subsection{Pseudokód}
+
+    \begin{algorithm}[H]
+        \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+        \SetAlgorithmName{Algoritmus}
+        \SetAlgoLined
+
+        \Input{$k\times k$ pole, mez $d^{*}_{max}$}
+        \Output{optimální posloupnost tahů}
+        \BlankLine
+
+        \eIf{abc or def}{
+
+        }\;
+        \While{While condition}{
+            instructions\;
+            \eIf{condition}{
+                instructions1\;
+                instructions2\;
+            }{
+                instructions3\;
+            }
+        }
+        \caption{MPI paralelismus}
+        \label{alg:mpi}
+    \end{algorithm}
+
+
+    \section{Naměřené výsledky a vyhodnocení}
 
     \begin{enumerate}
         \item Zvolte tri instance problemu s takovou velikosti vstupnich dat, pro ktere ma sekvencni
@@ -158,12 +301,51 @@
     \end{enumerate}
 
 
-    \section{Zaver}
+    \section{Závěr}
 
     Celkove zhodnoceni semestralni prace a zkusenosti ziskanych behem semestru.
 
+    Porchetta andouille flank kielbasa. Tail biltong turducken porchetta burgdoggen ground round shoulder ham, hamburger bacon shankle landjaeger fatback pork belly doner. Sirloin doner venison shankle cow, hamburger flank sausage pork belly. Tenderloin venison pancetta corned beef tongue cow pork belly capicola ball tip salami short ribs. Sirloin rump andouille tail shank fatback bresaola.
+
+    Leberkas ham bacon, pastrami turducken pork belly cupim salami kielbasa doner. Turkey cupim meatball capicola jowl cow shank chicken drumstick kevin salami swine pork belly. Drumstick leberkas corned beef beef short loin boudin. Turkey strip steak bacon, ball tip sirloin pork loin pork.
+
+    Doner tenderloin chislic rump shank sausage beef andouille. Frankfurter boudin strip steak ribeye, venison biltong beef. Drumstick ham hock pork chop buffalo rump. Beef ribs sausage filet mignon pork chop flank jerky.
+
+
+    \section{Skript pro spouštění a sekvenčního a OpenMP řešení}
+    Bash skript v \ref{listing:shellrun} spustí program, kterému v argumentu předá vstupní data jako textový soubor.
+    Formát vstupních dat viz podsekce \ref{subsec:popis-vstupu}. Pro sekvenční řešení skript spouští všechny řešení najednou.
+    Pro paralelní čeká vždy na dokončení běhu aktuálního vstupu.
+
+    \begin{figure}[htp]
+        \centering
+        \begin{cminted}{bash}
+            #!/usr/bin/bash
+
+            PROGRAM='./run.out'
+            OUT="out/parallel/data_epoch3_guided"
+
+            mkdir "$OUT"
+
+            for filename in ../data/*.txt; do
+            base=$(basename -- "$filename")
+            echo "$base"
+
+            # sekvencni
+            #  $PROGRAM "$filename" >"$OUT/$base" &
+
+            # paralelni
+            $PROGRAM "$filename" > "$OUT/$base"
+
+            done
+        \end{cminted}
+        \caption{Bash skript pro spuštění sekvenčního a OpenMP programu.}
+        \label{listing:shellrun}
+    \end{figure}
+
 
     \section{Literatura}
+    Tenderloin pork belly ham leberkas doner rump. Filet mignon beef pastrami pork belly drumstick. Beef ribs filet mignon porchetta pork turducken spare ribs tri-tip corned beef strip steak turkey capicola. Venison hamburger ball tip, buffalo fatback pork alcatra doner pork belly.
 
 
 \end{document}
