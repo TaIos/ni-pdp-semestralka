@@ -135,15 +135,6 @@
 
     \section{Popis paralelního algoritmu a jeho implementace v OpenMP - taskový paralelismus}
 
-    Popiste paralelni algoritmus, opet vyjdete ze zadani a presne vymezte
-    odchylky, ktere pri implementaci OpenMP pouzivate.
-    Popiste a vysvetlete strukturu celkoveho
-    paralelniho algoritmu na urovni procesuu v OpenMP a strukturu kodu
-    jednotlivych procesu. Napr. jak je naimplemtovana smycka pro cinnost
-    procesu v aktivnim stavu i v stavu necinnosti. Jake jste zvolili
-    konstanty a parametry pro skalovani algoritmu. Struktura a semantika
-    prikazove radky pro spousteni programu.
-
     Taskový paralelní algoritmus je naimplementován pomocí OpenMP. Hlavní rozdíl oproti sekvenčnímu algoritmu
     popsaném v \ref{sec:sequential} je rozdělení úlohy prohledávání stavového prostoru na tasky. Task je
     základní jednotka, kterou je OpenMP schopno přidělit vláknu a provést tak výpočet. Pro zadanou úlohu
@@ -199,19 +190,44 @@
     \end{algorithm}
 
 
+    \label{sec:data-par}
     \section{Popis paralelniho algoritmu a jeho implementace v OpenMP - datový paralelismus}
+    Datový paralelismus v OpenMP pracuje s datově nezávislými celky, které podle určené
+    strategie přiděluje vláknům na zpracování. Nezávislý datový celek je pro zadanou úlohu
+    šachovnice s pozicí všech figurek a historií tahů.
 
-    Popiste paralelni algoritmus, opet vyjdete ze zadani a presne vymezte
-    odchylky, ktere pri implementaci OpenMP pouzivate.
-    Popiste a vysvetlete strukturu celkoveho
-    paralelniho algoritmu na urovni procesuu v OpenMP a strukturu kodu
-    jednotlivych procesu. Napr. jak je naimplemtovana smycka pro cinnost
-    procesu v aktivnim stavu i v stavu necinnosti. Jake jste zvolili
-    konstanty a parametry pro skalovani algoritmu. Struktura a semantika
-    prikazove radky pro spousteni programu.
+    První krok je vygenerování datově nezávislých celků – to je provedeno před použitím OpenMP.
+    Ty jsou následně najednou předány OpenMP. To je určenou strategií rozdělí mezi vlákna.
+    Každé vlákno pak provádí sekvenční řešení problému popsané v sekci \ref{sec:sequential}.
+    Vlákna mezi sebou sdílejí pouze nejlepší řešení.
 
     \subsection{Konstanty a parametry pro škálování algoritmu}
-    Leberkas ham bacon, pastrami turducken pork belly cupim salami kielbasa doner. Turkey cupim meatball capicola jowl cow shank chicken drumstick kevin salami swine pork belly. Drumstick leberkas corned beef beef short loin boudin. Turkey strip steak bacon, ball tip sirloin pork loin pork.
+    Prvním krokem před spuštěním OpenMP řešení je vytvoření datově nezávislých instancí.
+    Ty se vytvoří použitím sekvečního algoritmu, viz sekce \ref{sec:sequential}.
+    Jejich počet je regulován konstantou \const{EPOCH_CNT}.
+
+    Parametrem OpenMP je konstanta \const{schedule}. Ta určuje politiku přidělování datově nezávislých instací vláknům.
+    Zde je použitá hodnota \const{dynamic()} bez parametrů. To znamená, že pokud vlákno dokončí výpočet je mu
+    přiřazena jedna další datově nezávislá instance k vyřešení.
+
+    \konstanta{EPOCH_CNT} Určuje, kolik datově nezávislých instancí je vygenerováno.
+    Pro každou epochu jsou provedeny všechny možné tahy buď koněm, nebo střelcem.
+    Po vyčerpání všech epoch jsou stavy, do kterých se kůň a střelec dostali
+    použity jako nezávislé instance.
+
+    \konstanta{schedule} OpenMP konstanta, která nastavuje politiku přidělování datově nezávislých instací vláknům.
+
+    \begin{table}[hb]
+        \centering
+        \begin{tabular}{|l|l|}
+            \hline
+            název      & hodnota \\ \hline
+            \const{EPOCH_CNT} & 3       \\ \hline
+            \const{schedule} & dynamic()      \\ \hline
+        \end{tabular}
+        \caption{Konstanty použité v OpenMP datovém paralelismu}
+        \label{tab:data-par-constants}
+    \end{table}
 
     \subsection{Pseudokód paralelního algoritmu — datový paralelismus}
     Porchetta andouille flank kielbasa. Tail biltong turducken porchetta burgdoggen ground round shoulder ham, hamburger bacon shankle landjaeger fatback pork belly doner. Sirloin doner venison shankle cow, hamburger flank sausage pork belly. Tenderloin venison pancetta corned beef tongue cow pork belly capicola ball tip salami short ribs. Sirloin rump andouille tail shank fatback bresaola.
@@ -247,17 +263,22 @@
 
 
     \section{Popis paralelního algoritmu a jeho implementace v MPI}
+    
+    Řešení s použitím MPI se skládá ze dvou částí. První je datový OpenMP paralelismus, 
+    viz sekce \ref{sec:data-par}. Druhou část tvoří MPI. Ten má za úkol řídit a distribuovat
+    výpočet na několika výpočetních uzlech.
 
-    Popiste paralelni algoritmus, opet vyjdete ze zadani a presne vymezte
-    odchylky, zvlaste u Master-Slave casti. Popiste a vysvetlete strukturu celkoveho
-    paralelniho algoritmu na urovni procesuu v MPI a strukturu kodu
-    jednotlivych procesu. Napr. jak je naimplemtovana smycka pro cinnost
-    procesu v aktivnim stavu i v stavu necinnosti. Jake jste zvolili
-    konstanty a parametry pro skalovani algoritmu. Struktura a semantika
-    prikazove radky pro spousteni programu.
+    MPI proces začíná tím, že si master vlákno identickým způsobem jako v sekci s datovým paralelismem\ref{sec:data-par}
+    vygeneruje datově nezávislé instance. Ty pak serializuje a společně s globálním nejlepším řešením je
+    pošle přes MPI interface slavům. Každý z nich pomocí datového paralelismu popsaného v sekci \ref{sec:data-par}
+    vyřeší přijmuté řešení a odešlě ho zpět master vláknu. Pak požádá master vlákno o další instanci k vyřešení.
+    Pokud master vláknu dojdou instance k vyřešení, rozešlě slavům zprávu o ukončení výpočtu.
 
     \subsection{Konstanty a parametry pro škálování algoritmu}
-    Leberkas ham bacon, pastrami turducken pork belly cupim salami kielbasa doner. Turkey cupim meatball capicola jowl cow shank chicken drumstick kevin salami swine pork belly. Drumstick leberkas corned beef beef short loin boudin. Turkey strip steak bacon, ball tip sirloin pork loin pork.
+    Protože MPI využívá pro řešení tasků datový OpenMP paralelismus popsaný v sekci \ref{sec:data-par}, jsou
+    zde uvedeny pouze MPI konstanty.
+
+    TODO nastaveni poctu vypocetnich jader
 
     \subsection{Pseudokód}
 
@@ -312,6 +333,7 @@
     Doner tenderloin chislic rump shank sausage beef andouille. Frankfurter boudin strip steak ribeye, venison biltong beef. Drumstick ham hock pork chop buffalo rump. Beef ribs sausage filet mignon pork chop flank jerky.
 
 
+    \newpage
     \section{Skript pro spouštění a sekvenčního a OpenMP řešení}
     Bash skript v \ref{listing:shellrun} spustí program, kterému v argumentu předá vstupní data jako textový soubor.
     Formát vstupních dat viz podsekce \ref{subsec:popis-vstupu}. Pro sekvenční řešení skript spouští všechny řešení najednou.
