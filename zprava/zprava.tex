@@ -318,8 +318,20 @@
         \item Merte paralelni cas pri pouziti $i=2,\cdot,60$ vypocetnich jader.
         \item Tabulkova a pripadne graficky zpracovane namerene hodnoty casove slozitosti měernych instanci behu programu s popisem instanci dat. Z namerenych dat sestavte grafy zrychleni $S(n,p)$.
         \item Analyza a hodnoceni vlastnosti paralelniho programu, zvlaste jeho efektivnosti a skalovatelnosti, pripadne popis zjisteneho superlinearniho zrychleni.
-
     \end{enumerate}
+
+    \begin{table}[]
+        \centering
+        \begin{tabular}{|l|l|l|l|l|}
+            \hline
+            instance & sekvenční, p=1 {[}s{]} & OpenMP task, p=2 {[}s{]} & OpenMP data, p=2 {[}s{]} & MPI, p=2 {[}s{]} \\ \hline
+            saj      &                        &                          &                          &                  \\ \hline
+            saj      &                        &                          &                          &                  \\ \hline
+            saj      &                        &                          &                          &                  \\ \hline
+        \end{tabular}
+        \caption{Naměřené výsledky. Jednotky jsou uvedené v sekundách. Konstanta p je počet použitých výpočetních jader.}
+        \label{tab:results}
+    \end{table}
 
 
     \section{Závěr}
