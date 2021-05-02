@@ -324,20 +324,35 @@
 
     \section{Závěr}
 
-    Celkove zhodnoceni semestralni prace a zkusenosti ziskanych behem semestru.
-
-    Porchetta andouille flank kielbasa. Tail biltong turducken porchetta burgdoggen ground round shoulder ham, hamburger bacon shankle landjaeger fatback pork belly doner. Sirloin doner venison shankle cow, hamburger flank sausage pork belly. Tenderloin venison pancetta corned beef tongue cow pork belly capicola ball tip salami short ribs. Sirloin rump andouille tail shank fatback bresaola.
-
-    Leberkas ham bacon, pastrami turducken pork belly cupim salami kielbasa doner. Turkey cupim meatball capicola jowl cow shank chicken drumstick kevin salami swine pork belly. Drumstick leberkas corned beef beef short loin boudin. Turkey strip steak bacon, ball tip sirloin pork loin pork.
-
-    Doner tenderloin chislic rump shank sausage beef andouille. Frankfurter boudin strip steak ribeye, venison biltong beef. Drumstick ham hock pork chop buffalo rump. Beef ribs sausage filet mignon pork chop flank jerky.
-
+%    Celkove zhodnoceni semestralni prace a zkusenosti ziskanych behem semestru.
+    Cílem předmětu bylo si na jednoduchém úkolu prohledávání stavového prostoru v šachovnici vyzkoušet metody pro
+    nalezení optimálního řešení. Nejdříve jsem implementoval jednoduché sekveční řešení. To jsem dále paralelizoval
+    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace – datová a tasková.
+    Použití OpenMP mi nedělalo větší problémy, protože se stačí pouze zamyslet a chytře do sekvenčného kódu doplnit
+    pár direktiv případně dopsat jednu/dvě funkce. Navíc se pod OpenMP dá kód rozumně debugovat. Větší problém jsem
+    měl s MPI. Pro jeho použití jsem musel doplnit a přepsat značnou část fungujícího OpenMP kódu. Nejvíce práce na
+    MPI mi zabrala serializace/deserializace instancí a řešení deadlocků při posílání.
 
     \newpage
-    \section{Skript pro spouštění a sekvenčního a OpenMP řešení}
+    \section{Spuštění a překlad}
     Bash skript v \ref{listing:shellrun} spustí program, kterému v argumentu předá vstupní data jako textový soubor.
     Formát vstupních dat viz podsekce \ref{subsec:popis-vstupu}. Pro sekvenční řešení skript spouští všechny řešení najednou.
     Pro paralelní čeká vždy na dokončení běhu aktuálního vstupu.
+
+    \begin{table}[hb]
+        \centering
+        \begin{tabular}{|l|l|}
+            \hline
+            řešení    & příkaz                                      \\ \hline
+            sekvenční & \const{g++ --std=c++11 -O3 -funroll-loops}          \\ \hline
+            OpenMP    & \const{g++ --std=c++11 -O3 -funroll-loops -fopenmp} \\ \hline
+            MPI       & \const{mpicxx --std=c++11 -lm -O3 -funroll-loops}   \\ \hline
+        \end{tabular}
+        \caption{Kompilační příkazy.}
+        \label{tab:comp}
+    \end{table}
+
+
 
     \begin{figure}[htp]
         \centering
