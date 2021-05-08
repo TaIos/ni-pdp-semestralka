@@ -750,6 +750,9 @@ int main(int argc, char **argv) {
     const int bufLen = 1000000;
     char buf[bufLen];
 
+    /* time measuring - start */
+    double t1 = MPI_Wtime();
+
     if (myRank == 0) { // master process
         Instance startInstance(ChessBoard(argv[1]), 0, BISHOP, numeric_limits<int>::max());
         ChessBoard bestBoard(startInstance.board);
@@ -858,6 +861,10 @@ int main(int argc, char **argv) {
             }
         }
     }
+
+    /* time measuring - stop */
+    double t2 = MPI_Wtime();
+    printf ("%d: Elapsed time is %f.\n",myRank,t2-t1);
 
     MPI_Finalize();
     return 0;
