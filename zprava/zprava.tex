@@ -322,14 +322,16 @@
 
     \begin{table}[]
         \centering
-        \begin{tabular}{|l|l|l|l|l|}
+        \begin{tabular}{|c|c|c|c|c|}
             \hline
-            instance & sekvenční, p=1 {[}s{]} & OpenMP task, p=2 {[}s{]} & OpenMP data, p=2 {[}s{]} & MPI, p=2 {[}s{]} \\ \hline
-            saj      &                        &                          &                          &                  \\ \hline
-            saj      &                        &                          &                          &                  \\ \hline
-            saj      &                        &                          &                          &                  \\ \hline
+            \multicolumn{1}{|l|}{instance} & \multicolumn{1}{l|}{sekvenční} & \multicolumn{1}{l|}{OpenMP task} & \multicolumn{1}{l|}{OpenMP data} & \multicolumn{1}{l|}{MPI} \\ \hline
+            saj7                           & 272                            &                                  &                                  &                          \\ \hline
+            saj10                          & 103                            &                                  &                                  &                          \\ \hline
+            saj12                          & 489                            &                                  &                                  &                          \\ \hline
         \end{tabular}
-        \caption{Naměřené výsledky. Jednotky jsou uvedené v sekundách. Konstanta p je počet použitých výpočetních jader.}
+        \caption{Naměřené výsledky. Jednotky jsou uvedené v sekundách. Konstanta p je počet použitých výpočetních
+        jader.
+        }
         \label{tab:results}
     \end{table}
 
@@ -358,7 +360,7 @@
             řešení    & příkaz                                      \\ \hline
             sekvenční & \const{g++ --std=c++11 -O3 -funroll-loops}          \\ \hline
             OpenMP    & \const{g++ --std=c++11 -O3 -funroll-loops -fopenmp} \\ \hline
-            MPI       & \const{mpicxx --std=c++11 -lm -O3 -funroll-loops}   \\ \hline
+            MPI       & \const{mpicxx --std=c++11 -lm -O3 -funroll-loops -fopenmp}   \\ \hline
         \end{tabular}
         \caption{Kompilační příkazy.}
         \label{tab:comp}
