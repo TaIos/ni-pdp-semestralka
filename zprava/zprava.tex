@@ -350,9 +350,24 @@
 
     \newpage
     \section{Spuštění a překlad}
-    Skripty ve výpisech A a B automatizují překlad a spuštění OpenMP a MPI řešení na svazku STAR.
+    Skripty ve výpisech \ref{listing:openmp-runner} a \ref{listing:mpi-runner}  automatizují překlad a spuštění OpenMP a MPI řešení na svazku STAR.
     Pro sekvenční úlohu jsem skript nevytvářel, protože rychlejší bylo ruční měření a překlad. Kompletní
     skripty i s konfiguračními soubory jsou volně dostupná na \url{https://github.com/TaIos/ni-pdp-vysledky-mereni-star}.
+    Pro stručnost uvádím tabulku \ref{tab:compilation-short}, která zobrazuje pouze příkazy, které skripty používají pro překlad.
+
+    \begin{table}[ht]
+        \centering
+        \begin{tabular}{|l|l|}
+            \hline
+            řešení    & příkaz                                      \\ \hline
+            sekvenční & \const{g++ --std=c++11 -O3 -funroll-loops}          \\ \hline
+            OpenMP    & \const{g++ --std=c++11 -O3 -funroll-loops -fopenmp} \\ \hline
+            MPI       & \const{mpicxx --std=c++11 -lm -O3 -funroll-loops -fopenmp}   \\ \hline
+        \end{tabular}
+        \caption{Kompilační příkazy používané skripty.}
+        \label{tab:compilation-short}
+    \end{table}
+    
 
 
     \pagebreak
