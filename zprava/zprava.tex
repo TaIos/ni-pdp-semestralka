@@ -107,26 +107,40 @@
 
     \subsection{Pseudokód}
     \begin{algorithm}[H]
-        \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-        \SetAlgorithmName{Algoritmus}
         \SetAlgoLined
+        \DontPrintSemicolon
+        \SetAlgorithmName{Algoritmus}
+        \SetKwFunction{sequenceAlg}{sequence}
+        \SetKwFunction{betterSolutionExists}{existujeLepšíŘešení}
+        \SetKwFunction{updateBestSolution}{aktualizujNejlepšíŘešení}
 
-        \Input{$k\times k$ pole, mez $d^{*}_{max}$}
-        \Output{optimální posloupnost tahů}
-        \BlankLine
-
-        \eIf{abc or def}{
-
+        \SetKwFunction{FBetterSolutionExists}{existujeLepšíŘešení}
+        \SetKwProg{Fn}{Function}{:}{}
+        \Fn{\FBetterSolutionExists{šachovnice $S$, nejlepší řešení $S^*$}}{
+        \uIf{počet pěšáků $S$ + počet tahů $S$ $\ge$ délka $S^*$
+            \newline {\bf or}
+            počet tahů $S$ + počet pěšáků $S$ > maximální hloubka
+            \newline {\bf or}
+            $S^*$ má minimální možný počet tahů
+        } {
+                \Return {\bf True}\;
+            } \Else{
+            \Return {\bf False}\;
         }\;
-        \While{While condition}{
-            instructions\;
-            \eIf{condition}{
-                instructions1\;
-                instructions2\;
-            }{
-                instructions3\;
-            }
-        }
+        }\;
+
+        \SetKwFunction{FMain}{sequence}
+        \SetKwProg{Fn}{Function}{:}{}
+        \Fn{\FMain{šachovnice $S$, nejlepší řešení $S^*$}}{
+            \If{\betterSolutionExists{S, S*}} {
+                \Return
+            }\;
+            \If{počet pěšáků $S$ je 0} {
+                \updateBestSolution{S, S*}\;
+                \Return\;
+            }\;
+        } \;
+
         \caption{sekvenční}
         \label{alg:sequential}
     \end{algorithm}
