@@ -109,12 +109,14 @@
     \begin{algorithm}[H]
         \SetAlgoLined
         \DontPrintSemicolon
-        \SetAlgorithmName{Algoritmus}
-        \SetKwFunction{sequenceAlg}{sequence}
+        \SetAlgorithmName{Algoritmus}{}{}
         \SetKwFunction{betterSolutionExists}{existujeLepšíŘešení}
         \SetKwFunction{updateBestSolution}{aktualizujNejlepšíŘešení}
-
+        \SetKwFunction{HeuristikaKun}{HeuristikaKůň}
+        \SetKwFunction{HeuristikaStrelec}{HeuristikaStřelec}
+        \SetKwFunction{MakeMove}{ProveďTah}
         \SetKwFunction{FBetterSolutionExists}{existujeLepšíŘešení}
+
         \SetKwProg{Fn}{Function}{:}{}
         \Fn{\FBetterSolutionExists{šachovnice $S$, nejlepší řešení $S^*$}}{
         \uIf{počet pěšáků $S$ + počet tahů $S$ $\ge$ délka $S^*$
@@ -129,6 +131,7 @@
         }\;
         }\;
 
+
         \SetKwFunction{FMain}{sequence}
         \SetKwProg{Fn}{Function}{:}{}
         \Fn{\FMain{šachovnice $S$, nejlepší řešení $S^*$}}{
@@ -139,8 +142,22 @@
                 \updateBestSolution{S, S*}\;
                 \Return\;
             }\;
-        } \;
 
+            \SetKwData{Tahy}{Tahy}
+            \Tahy$\leftarrow$ prázdný list\;
+        \If{je na tahu kůň}{
+            \Tahy = \HeuristikaKun{$S$}
+        }\;
+            \If{je na tahu střelec}{
+                \Tahy = \HeuristikaStrelec{$S$}
+            }\;
+
+            \SetKwData{Next}{ŠachovniceNext}
+            \ForAll{$t$ in \Tahy} {
+                \Next = \MakeMove{$S$, $t$}
+            }\;
+            \FMain{\Next, $S^*$}\;
+        }\;
         \caption{sekvenční}
         \label{alg:sequential}
     \end{algorithm}
