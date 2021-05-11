@@ -31,6 +31,7 @@
 \usepackage[linesnumbered,lined,boxed,commentsnumbered]{algorithm2e}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\usepackage{multirow}
 
 \begin{document}
     \begin{center}
@@ -416,18 +417,51 @@
 
     \begin{table}[]
         \centering
-        \begin{tabular}{|c|c|c|c|c|}
+        \begin{tabular}{|c|c|}
             \hline
-            \multicolumn{1}{|l|}{instance} & \multicolumn{1}{l|}{sekvenční} & \multicolumn{1}{l|}{OpenMP task} & \multicolumn{1}{l|}{OpenMP data} & \multicolumn{1}{l|}{MPI} \\ \hline
-            saj7                           & 272                            &                                  &                                  &                          \\ \hline
-            saj10                          & 103                            &                                  &                                  &                          \\ \hline
-            saj12                          & 489                            &                                  &                                  &                          \\ \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{{}doba běhu} {[}minuty{]}} \\ \hline
+            saj7                           & 1.727                                       \\ \hline
+            saj10                          & 8.163                                       \\ \hline
+            saj12                          & 4.542                                       \\ \hline
         \end{tabular}
-        \caption{Naměřené výsledky. Jednotky jsou uvedené v sekundách. Konstanta p je počet použitých výpočetních
-        jader.
-        }
-        \label{tab:results}
+        \caption{Sekvenční algoritmus.}
+        \label{tab:seq}
     \end{table}
+
+    \begin{table}[]
+        \centering
+        \begin{tabular}{|c|c|l|}
+            \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}minuty{]} \\ \hline
+            \multirow{8}{*}{saj7}  & 1  & 0.251 \\
+            & 2  & 0.311 \\
+            & 4  & 0.017 \\
+            & 6  & 0.075 \\
+            & 8  & 0.047 \\
+            & 10 & 0.019 \\
+            & 16 & 0.004 \\
+            & 20 & 0.006 \\ \hline
+            \multirow{8}{*}{saj10} & 1  & 2.199 \\
+            & 2  & 3.321 \\
+            & 4  & 2.077 \\
+            & 6  & 1.695 \\
+            & 8  & 1.428 \\
+            & 10 & 1.078 \\
+            & 16 & 1.439 \\
+            & 20 & 1.624 \\ \hline
+            \multirow{8}{*}{saj12} & 1  & 9.555 \\
+            & 2  & NaN   \\
+            & 4  & 6.303 \\
+            & 6  & 8.426 \\
+            & 8  & 8.113 \\
+            & 10 & 5.946 \\
+            & 16 & NaN   \\
+            & 20 & 5.654 \\ \hline
+        \end{tabular}
+        \caption{OpenMP task algoritmus.}
+        \label{tab:openmp-task}
+    \end{table}
+
 
 
     \section{Závěr}
@@ -452,7 +486,7 @@
         \centering
         \begin{tabular}{|l|l|}
             \hline
-            řešení    & příkaz                                      \\ \hline
+            \textbf{řešení}    & \textbf{příkaz}                                      \\ \hline
             sekvenční & \const{g++ --std=c++11 -O3 -funroll-loops}          \\ \hline
             OpenMP    & \const{g++ --std=c++11 -O3 -funroll-loops -fopenmp} \\ \hline
             MPI       & \const{mpicxx --std=c++11 -lm -O3 -funroll-loops -fopenmp}   \\ \hline
@@ -460,7 +494,7 @@
         \caption{Kompilační příkazy používané skripty.}
         \label{tab:compilation-short}
     \end{table}
-    
+
 
 
     \pagebreak
