@@ -332,27 +332,72 @@
     \subsection{Pseudokód}
 
     \begin{algorithm}[H]
-        \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-        \SetAlgorithmName{Algoritmus}
         \SetAlgoLined
+        \DontPrintSemicolon
+        \SetAlgorithmName{Algoritmus}{}{}
+        \SetKwFunction{GenerateInstances}{vygenerujInstance}
+        \SetKwFunction{SequenceWithOmpCritical}{sequenceAlgorgitmusSOmpCriticalProUpdate}
+        \SetKwFunction{MpiSend}{MPI\_Send}
+        \SetKwFunction{MpiIProbe}{MPI\_Iprobe($\ldots$)}
+        \SetKwFunction{MpiRecv}{MPI\_Recv($\ldots$)}
+        \SetKwData{Instance}{Instance}
+        \SetKwData{InstanceAti}{Instance[i]}
+        \SetKwFunction{UpdateBestSolution}{AktualizujNejlepšíŘešení}
+        \SetKwFunction{betterSolutionExists}{existujeLepšíŘešení}
+        \SetKwFunction{OpenMpData}{openMpData}
 
-        \Input{$k\times k$ pole, mez $d^{*}_{max}$}
-        \Output{optimální posloupnost tahů}
-        \BlankLine
 
-        \eIf{abc or def}{
+        \SetKwFunction{FMain}{mainMPI}
+        \SetKwProg{Fn}{Function}{:}{}
+        \Fn{\FMain{šachovnice $S$, nejlepší řešení $S^*$}}{
+            \uIf{master vlákno} {
+                \Instance$\leftarrow$ \GenerateInstances{$S$}\;
+                \For{$i \leftarrow 1 \ldots$ počet slave procesů} {
+                \MpiSend{i, \InstanceAti, $S^*$}\;
+                }\;
 
+                \SetKwData{Cnt}{alive}
+                \Cnt $\leftarrow$ počet slave procesů\;
+            \While{True} {
+                \If{\MpiIProbe} {
+                    $S_{slave}$, $id_{slave} \leftarrow$ \MpiRecv\;
+                    \If{not \betterSolutionExists{$S_{slave}$, $S^*$}} {
+                        $S^* \leftarrow S_{slave}$\;
+                    }\;
+
+                \uIf{zvýbá nějaká nevyřešená instance $S'$ v \Instance}{
+                    \MpiSend{$id_{slave}$, $S'$, $S^*$}
+                }
+                \Else{
+                    \MpiSend{$id_{slave}$, ukončující token}\;
+                    \Cnt $\leftarrow$ \Cnt $-$ 1
+
+                }\;
+
+            \If {\Cnt $=0$}{
+                    {\bf break}\;
+            }\;
+            }\;
+
+            }\;
+
+            } \ElseIf{slave vlákno} {
+                \While{True} {
+                    \If{\MpiIProbe} {
+                        $S'$, $S^*, token \leftarrow$ \MpiRecv\;
+                        \uIf{$token$ =  práce} {
+                        $S_{slave} \leftarrow$ \OpenMpData{$S'$, $S^*$} \;
+                        \MpiSend{$id_{master}$, $S_{slave}$}\;
+                        } \ElseIf{$token$ =  konec} {
+                            {\bf break}\;
+                        }\;
+
+                    }\;
+                }\;
+
+            }\;
         }\;
-        \While{While condition}{
-            instructions\;
-            \eIf{condition}{
-                instructions1\;
-                instructions2\;
-            }{
-                instructions3\;
-            }
-        }
-        \caption{MPI paralelismus}
+        \caption{MPI}
         \label{alg:mpi}
     \end{algorithm}
 
