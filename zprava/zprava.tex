@@ -199,7 +199,7 @@
         \DontPrintSemicolon
         \SetAlgorithmName{Algoritmus}{}{}
         \SetKwFunction{betterSolutionExists}{existujeLepšíŘešení}
-        \SetKwFunction{UpdateBestSolution}{AktualizujNejlepšíŘešení}
+        \SetKwFunction{UpdateBestSolution}{aktualizujNejlepšíŘešení}
         \SetKwFunction{HeuristikaKun}{HeuristikaKůň}
         \SetKwFunction{HeuristikaStrelec}{HeuristikaStřelec}
         \SetKwFunction{MakeMove}{ProveďTah}
@@ -217,9 +217,9 @@
                 \texttt{\#pragma omp critical}\;
                 \If{\betterSolutionExists{S, S*}}{
                     \UpdateBestSolution{S, S*}\;
-                    \Return\;
                 }\;
             }\;
+            \Return\;
         }\;
 
             \SetKwData{Tahy}{Tahy}
@@ -342,7 +342,7 @@
         \SetKwFunction{MpiRecv}{MPI\_Recv($\ldots$)}
         \SetKwData{Instance}{Instance}
         \SetKwData{InstanceAti}{Instance[i]}
-        \SetKwFunction{UpdateBestSolution}{AktualizujNejlepšíŘešení}
+        \SetKwFunction{UpdateBestSolution}{aktualizujNejlepšíŘešení}
         \SetKwFunction{betterSolutionExists}{existujeLepšíŘešení}
         \SetKwFunction{OpenMpData}{openMpData}
 
@@ -353,7 +353,7 @@
             \uIf{master vlákno} {
                 \Instance$\leftarrow$ \GenerateInstances{$S$}\;
                 \For{$i \leftarrow 1 \ldots$ počet slave procesů} {
-                \MpiSend{i, \InstanceAti, $S^*$}\;
+                \MpiSend{$slave_i$, \InstanceAti, $S^*$}\;
                 }\;
 
                 \SetKwData{Cnt}{alive}
@@ -362,7 +362,7 @@
                 \If{\MpiIProbe} {
                     $S_{slave}$, $id_{slave} \leftarrow$ \MpiRecv\;
                     \If{not \betterSolutionExists{$S_{slave}$, $S^*$}} {
-                        $S^* \leftarrow S_{slave}$\;
+                        \UpdateBestSolution{$S_{slave}$, $S^*$}\;
                     }\;
 
                 \uIf{zvýbá nějaká nevyřešená instance $S'$ v \Instance}{
