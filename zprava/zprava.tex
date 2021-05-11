@@ -465,7 +465,7 @@
             saj10 & 0.850 & 0.586 & 0.810 & 0.951 & 1.036 & 1.052                          & 1.025                          & 1.263                          \\ \hline
             saj12 & 0.849 & 0.849 & 1.178 & 1.178 & 1.178 & 1.178                          & 1.178                          & 1.178                          \\ \hline
         \end{tabular}
-        \caption{datodatový paralelismus} \label{tab:speedup-openmp-data}
+        \caption{datový paralelismus} \label{tab:speedup-openmp-data}
         \end{subtable}%
         \bigskip
         \bigskip
@@ -495,6 +495,83 @@
         \label{tab:speedup}
     \end{table}
 
+    \subsection{Efektivita}
+
+    \begin{table}[h]
+        \begin{subtable}{.5\linewidth}\centering
+        \begin{tabular}{|c|c|c|l|l|l|l|l|l|}
+            \hline
+            \textbf{instance / p} &
+            \textbf{1} &
+            \textbf{2} &
+            \multicolumn{1}{c|}{\textbf{4}} &
+            \multicolumn{1}{c|}{\textbf{6}} &
+            \multicolumn{1}{c|}{\textbf{8}} &
+            \multicolumn{1}{c|}{\textbf{10}} &
+            \multicolumn{1}{c|}{\textbf{16}} &
+            \multicolumn{1}{c|}{\textbf{20}} \\ \hline
+            saj7 &
+                {\color[HTML]{FE0000} 18.094} &
+                {\color[HTML]{FE0000} 7.294} &
+                {\color[HTML]{FE0000} 64.766} &
+                {\color[HTML]{FE0000} 10.051} &
+                {\color[HTML]{FE0000} 12.025} &
+                {\color[HTML]{FE0000} 22.730} &
+                {\color[HTML]{FE0000} 68.683} &
+                {\color[HTML]{FE0000} 34.324} \\ \hline
+            saj10 & 0.785 & 0.260 & 0.208 & 0.170 & 0.151 & 0.160 & 0.075 & 0.053 \\ \hline
+            saj12 & 0.854 & nan   & 0.324 & 0.161 & 0.126 & 0.137 & nan   & 0.072 \\ \hline
+        \end{tabular}
+        \caption{taskový paralelismus}
+        \label{tab:efektivita-openmp-task}
+        \end{subtable}%
+
+        \begin{subtable}{.5\linewidth}\centering
+        \begin{tabular}{|c|c|c|l|l|l|l|l|l|}
+            \hline
+            \textbf{instance / p} &
+            \textbf{1} &
+            \textbf{2} &
+            \multicolumn{1}{c|}{\textbf{4}} &
+            \multicolumn{1}{c|}{\textbf{6}} &
+            \multicolumn{1}{c|}{\textbf{8}} &
+            \multicolumn{1}{c|}{\textbf{10}} &
+            \multicolumn{1}{c|}{\textbf{16}} &
+            \multicolumn{1}{c|}{\textbf{20}} \\ \hline
+            saj7  & 0.872 & 0.460 & 0.497 & 0.802 & 0.732 & {\color[HTML]{FE0000} 78.768} & {\color[HTML]{FE0000} 40.268} & {\color[HTML]{FE0000} 45.575} \\ \hline
+            saj10 & 0.850 & 0.293 & 0.202 & 0.158 & 0.130 & 0.105                         & 0.064                         & 0.063                         \\ \hline
+            saj12 & 0.849 & 0.496 & 0.295 & 0.231 & 0.159 & 0.122                         & 0.107                         & 0.045                         \\ \hline
+        \end{tabular}
+        \caption{datový paralelismus}
+        \label{tab:efektivita-openmp-data}
+    \end{subtable}%
+
+        \begin{subtable}{.5\linewidth}\centering
+            \centering
+            \begin{tabular}{|c|c|c|l|l|l|l|l|l|l|l|}
+                \hline
+                \textbf{instance / (p,n)} &
+                \textbf{(6,3)} &
+                \textbf{(6,4)} &
+                \multicolumn{1}{c|}{\textbf{(8,3)}} &
+                \multicolumn{1}{c|}{\textbf{(8,4)}} &
+                \textbf{12,3)} &
+                \textbf{(12,4)} &
+                \textbf{(16,3)} &
+                \textbf{(16,4)} &
+                \textbf{(20,3)} &
+                \textbf{(20,4)} \\ \hline
+                saj7  & 0.133 & 0.116 & 0.125 & 0.108 & 0.096 & 0.078 & 0.073 & 0.062 & 0.060 & 0.047 \\ \hline
+                saj10 & 0.105 & 0.123 & 0.091 & 0.100 & 0.061 & 0.072 & 0.050 & 0.052 & 0.039 & 0.041 \\ \hline
+                saj12 & 0.110 & 0.095 & 0.100 & 0.084 & 0.069 & 0.064 & 0.056 & 0.046 & 0.050 & 0.036 \\ \hline
+            \end{tabular}
+            \caption{MPI}
+            \label{tab:efektivita-mpi}
+        \end{subtable}
+
+    \caption{Naměřená efektivita. Počet výpočetních vláken je označen jako p, počet uzlů jako n (pouze u MPI). Barevně zvýrazněná je efektivita větší než 1.}
+        \label{tab:efektivita}
+    \end{table}
 
     \subsection{Naměřené časy}
     \begin{table}[hb!]
