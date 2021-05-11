@@ -419,20 +419,20 @@
         \centering
         \begin{tabular}{|c|c|}
             \hline
-            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{{}doba běhu} {[}minuty{]}} \\ \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{{}doba běhu} {[}m{]}} \\ \hline
             saj7                           & 1.727                                       \\ \hline
             saj10                          & 8.163                                       \\ \hline
             saj12                          & 4.542                                       \\ \hline
         \end{tabular}
-        \caption{Sekvenční algoritmus.}
+        \caption{Sekvenční algoritmus -- doba běhu v minutách.}
         \label{tab:seq}
     \end{table}
 
     \begin{table}[]
         \centering
-        \begin{tabular}{|c|c|l|}
+        \begin{tabular}{|c|c|c|}
             \hline
-            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}minuty{]} \\ \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}m{]} \\ \hline
             \multirow{8}{*}{saj7}  & 1  & 0.251 \\
             & 2  & 0.311 \\
             & 4  & 0.017 \\
@@ -450,15 +450,15 @@
             & 16 & 1.439 \\
             & 20 & 1.624 \\ \hline
             \multirow{8}{*}{saj12} & 1  & 9.555 \\
-            & 2  & NaN   \\
+            & 2  & $\infty$   \\
             & 4  & 6.303 \\
             & 6  & 8.426 \\
             & 8  & 8.113 \\
             & 10 & 5.946 \\
-            & 16 & NaN   \\
+            & 16 & $\infty$   \\
             & 20 & 5.654 \\ \hline
         \end{tabular}
-        \caption{OpenMP task algoritmus.}
+        \caption{OpenMP task algoritmus -- doba běhu v minutách.}
         \label{tab:openmp-task}
     \end{table}
 
@@ -466,9 +466,9 @@
 % \usepackage{multirow}
     \begin{table}[]
         \centering
-        \begin{tabular}{|c|c|l|}
+        \begin{tabular}{|c|c|c|}
             \hline
-            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}minuty{]} \\ \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}m{]} \\ \hline
             \multirow{8}{*}{saj7}  & 1  & 5.207 \\
             & 2  & 4.935 \\
             & 4  & 2.283 \\
@@ -494,8 +494,50 @@
             & 16 & 4.788 \\
             & 20 & 8.986 \\ \hline
         \end{tabular}
-        \caption{OpenMP data algoritmus.}
+        \caption{OpenMP data algoritmus -- doba běhu v minutách.}
         \label{tab:openmp-data}
+    \end{table}
+
+    % Please add the following required packages to your document preamble:
+% \usepackage{multirow}
+    \begin{table}[]
+        \centering
+        \begin{tabular}{|c|c|c|c|}
+            \hline
+            \textbf{instance} & \textbf{\#jader} & \textbf{\#node} & \multicolumn{1}{c|}{\textbf{doba běhu} {[}m{]}} \\ \hline
+            \multirow{10}{*}{saj7}  & 6  & 3 & 1.891 \\
+            & 6  & 4 & 1.630 \\
+            & 8  & 3 & 1.518 \\
+            & 8  & 4 & 1.318 \\
+            & 12 & 3 & 1.316 \\
+            & 12 & 4 & 1.210 \\
+            & 16 & 3 & 1.294 \\
+            & 16 & 4 & 1.141 \\
+            & 20 & 3 & 1.269 \\
+            & 20 & 4 & 1.210 \\ \hline
+            \multirow{10}{*}{saj10} & 6  & 3 & 0.912 \\
+            & 6  & 4 & 0.583 \\
+            & 8  & 3 & 0.787 \\
+            & 8  & 4 & 0.542 \\
+            & 12 & 3 & 0.789 \\
+            & 12 & 4 & 0.502 \\
+            & 16 & 3 & 0.713 \\
+            & 16 & 4 & 0.520 \\
+            & 20 & 3 & 0.746 \\
+            & 20 & 4 & 0.521 \\ \hline
+            \multirow{10}{*}{saj12} & 6  & 3 & 4.111 \\
+            & 6  & 4 & 3.578 \\
+            & 8  & 3 & 3.409 \\
+            & 8  & 4 & 3.054 \\
+            & 12 & 3 & 3.267 \\
+            & 12 & 4 & 2.638 \\
+            & 16 & 3 & 3.021 \\
+            & 16 & 4 & 2.783 \\
+            & 20 & 3 & 2.703 \\
+            & 20 & 4 & 2.849 \\ \hline
+        \end{tabular}
+        \caption{MPI algoritmus.}
+        \label{tab:mpi}
     \end{table}
 
 
