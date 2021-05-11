@@ -462,6 +462,42 @@
         \label{tab:openmp-task}
     \end{table}
 
+    % Please add the following required packages to your document preamble:
+% \usepackage{multirow}
+    \begin{table}[]
+        \centering
+        \begin{tabular}{|c|c|l|}
+            \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}minuty{]} \\ \hline
+            \multirow{8}{*}{saj7}  & 1  & 5.207 \\
+            & 2  & 4.935 \\
+            & 4  & 2.283 \\
+            & 6  & 0.944 \\
+            & 8  & 0.775 \\
+            & 10 & 0.005 \\
+            & 16 & 0.007 \\
+            & 20 & 0.004 \\ \hline
+            \multirow{8}{*}{saj10} & 1  & 2.032 \\
+            & 2  & 2.948 \\
+            & 4  & 2.133 \\
+            & 6  & 1.817 \\
+            & 8  & 1.667 \\
+            & 10 & 1.642 \\
+            & 16 & 1.686 \\
+            & 20 & 1.368 \\ \hline
+            \multirow{8}{*}{saj12} & 1  & 9.610 \\
+            & 2  & 8.232 \\
+            & 4  & 6.927 \\
+            & 6  & 5.880 \\
+            & 8  & 6.409 \\
+            & 10 & 6.695 \\
+            & 16 & 4.788 \\
+            & 20 & 8.986 \\ \hline
+        \end{tabular}
+        \caption{OpenMP data algoritmus.}
+        \label{tab:openmp-data}
+    \end{table}
+
 
 
     \section{Závěr}
