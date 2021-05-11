@@ -152,19 +152,17 @@
                 \Tahy = \HeuristikaStrelec{$S$}
             }\;
 
-            \SetKwData{Next}{ŠachovniceNext}
+            \SetKwData{Next}{$S_{next}$}
             \ForAll{$t$ in \Tahy} {
-                \Next = \MakeMove{$S$, $t$}
+                \Next = \MakeMove{$S$, $t$}\;
+                \FMain{\Next, $S^*$}\;
             }\;
-            \FMain{\Next, $S^*$}\;
         }\;
         \caption{sekvenční}
         \label{alg:sequential}
     \end{algorithm}
 
     \label{sec:task-par}
-
-
     \section{Popis paralelního algoritmu a jeho implementace v OpenMP - taskový paralelismus}
 
     Taskový paralelní algoritmus je naimplementován pomocí OpenMP. Hlavní rozdíl oproti sekvenčnímu algoritmu
@@ -197,28 +195,51 @@
     \subsection{Pseudokód}
 
     \begin{algorithm}[H]
-        \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-        \SetAlgorithmName{Algoritmus}
         \SetAlgoLined
+        \DontPrintSemicolon
+        \SetAlgorithmName{Algoritmus}{}{}
+        \SetKwFunction{betterSolutionExists}{existujeLepšíŘešení}
+        \SetKwFunction{UpdateBestSolution}{AktualizujNejlepšíŘešení}
+        \SetKwFunction{HeuristikaKun}{HeuristikaKůň}
+        \SetKwFunction{HeuristikaStrelec}{HeuristikaStřelec}
+        \SetKwFunction{MakeMove}{ProveďTah}
+        \SetKwFunction{FBetterSolutionExists}{existujeLepšíŘešení}
 
-        \Input{$k\times k$ pole, mez $d^{*}_{max}$}
-        \Output{optimální posloupnost tahů}
-        \BlankLine
+        \SetKwFunction{FMain}{openMpTask}
+        \SetKwProg{Fn}{Function}{:}{}
+        \Fn{\FMain{šachovnice $S$, nejlepší řešení $S^*$}}{
+            \If{\betterSolutionExists{S, S*}}{
+                \Return\;
+            }\;
 
-        \eIf{abc or def}{
-
+        \If{počet pěšáků $S$ je 0} {
+            \If{\betterSolutionExists{S, S*}}{
+                \texttt{\#pragma omp critical}\;
+                \If{\betterSolutionExists{S, S*}}{
+                    \UpdateBestSolution{S, S*}\;
+                    \Return\;
+                }\;
+            }\;
         }\;
-        \While{While condition}{
-            instructions\;
-            \eIf{condition}{
-                instructions1\;
-                instructions2\;
-            }{
-                instructions3\;
-            }
-        }
-        \caption{OpenMP taskový paralelismus}
-        \label{alg:task-par}
+
+            \SetKwData{Tahy}{Tahy}
+            \Tahy$\leftarrow$ prázdný list\;
+            \If{je na tahu kůň}{
+                \Tahy = \HeuristikaKun{$S$}
+            }\;
+            \If{je na tahu střelec}{
+                \Tahy = \HeuristikaStrelec{$S$}
+            }\;
+
+            \SetKwData{Next}{$S_{next}$}
+            \ForAll{$t$ in \Tahy} {
+                \Next = \MakeMove{$S$, $t$}\;
+                \texttt{\#pragma omp task firstprivate($\ldots$)}\;
+                \FMain{\Next, $S^*$}\;
+            }\;
+        }\;
+        \caption{OpenMP task}
+        \label{alg:openmp-task}
     \end{algorithm}
 
 
@@ -269,28 +290,24 @@
     \subsection{Pseudokód}
 
     \begin{algorithm}[H]
-        \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-        \SetAlgorithmName{Algoritmus}
         \SetAlgoLined
+        \DontPrintSemicolon
+        \SetAlgorithmName{Algoritmus}{}{}
+        \SetKwFunction{GenerateInstances}{vygenerujInstance}
+        \SetKwFunction{SequenceWithOmpCritical}{sequenceAlgorgitmusSOmpCriticalProUpdate}
+        \SetKwData{Instance}{Instance}
 
-        \Input{$k\times k$ pole, mez $d^{*}_{max}$}
-        \Output{optimální posloupnost tahů}
-        \BlankLine
-
-        \eIf{abc or def}{
-
+        \SetKwFunction{FMain}{openMpData}
+        \SetKwProg{Fn}{Function}{:}{}
+        \Fn{\FMain{šachovnice $S$, nejlepší řešení $S^*$}}{
+            \Instance$\leftarrow$ \GenerateInstances{$S$}\;
+            \texttt{\#pragma omp parallel for $\ldots$}\;
+            \ForAll{$S_{gen}$ in \Instance} {
+            \SequenceWithOmpCritical{$S_{gen}$, $S^*$}
+            }\;
         }\;
-        \While{While condition}{
-            instructions\;
-            \eIf{condition}{
-                instructions1\;
-                instructions2\;
-            }{
-                instructions3\;
-            }
-        }
-        \caption{OpenMP datový paralelismus}
-        \label{alg:data-par}
+        \caption{OpenMP data}
+        \label{alg:openmp-data}
     \end{algorithm}
 
 
