@@ -450,6 +450,10 @@
     \label{sec:namerene-vysledky}
     \section{Naměřené výsledky a vyhodnocení}
 
+    Všechny tabulky s naměřenými daty jsou z důvodu jejich velikosti v sekci \ref{sec:tabulky}.
+    Zde je jejich diskuze a vyhodnocení.
+
+
     \begin{enumerate}
         \item Zvolte tri instance problemu s takovou velikosti vstupnich dat, pro ktere ma sekvencni
         algoritmus casovou slozitost mezi 1 a 10 minutami.
@@ -459,6 +463,158 @@
         \item Tabulkova a pripadne graficky zpracovane namerene hodnoty casove slozitosti měernych instanci behu programu s popisem instanci dat. Z namerenych dat sestavte grafy zrychleni $S(n,p)$.
         \item Analyza a hodnoceni vlastnosti paralelniho programu, zvlaste jeho efektivnosti a skalovatelnosti, pripadne popis zjisteneho superlinearniho zrychleni.
     \end{enumerate}
+    \section{Závěr}
+
+%    Celkove zhodnoceni semestralni prace a zkusenosti ziskanych behem semestru.
+    Cílem předmětu bylo si na jednoduchém úkolu prohledávání stavového prostoru v šachovnici vyzkoušet metody pro
+    nalezení optimálního řešení. Nejdříve jsem implementoval jednoduché sekveční řešení. To jsem dále paralelizoval
+    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace – datová a tasková.
+    Použití OpenMP mi nedělalo větší problémy, protože se stačí pouze zamyslet a chytře do sekvenčného kódu doplnit
+    pár direktiv případně dopsat jednu/dvě funkce. Navíc se pod OpenMP dá kód rozumně debugovat. Větší problém jsem
+    měl s MPI. Pro jeho použití jsem musel doplnit a přepsat značnou část fungujícího OpenMP kódu. Nejvíce práce na
+    MPI mi zabrala serializace/deserializace instancí a řešení deadlocků při posílání.
+
+    \newpage
+    \section{Spuštění a překlad}
+    Pro automatické testování OpenMP a MPI jsem vytvořil dva skripty. Každý z nich upraví zdrojový kód řešení
+    podle potřeby a překompiluje ho. Dále vygeneruje qrun skript, který spustí na svazku STAR. Výsledky uloží na
+    předem definované místo. Pro zjednodušení uvádím tabulku \ref{tab:compilation-short}, která ukazuje kompilační příkazy a přepínače
+    použité jednotlivými skripty.
+
+    Všechny výsledky testování pro OpenMP implementaci byly vygenerovány jedním spuštěním skriptu
+    \href{https://github.com/TaIos/ni-pdp-vysledky-mereni-star/blob/master/openmp/tester-openmp.sh}{tester-openmp.sh}.
+    Obdobně pro MPI skriptem \href{https://github.com/TaIos/ni-pdp-vysledky-mereni-star/blob/master/mpi/tester-mpi.sh}{tester-mpi.sh}.
+    Pro sekvenční řešení stačilo ruční spouštění.
+
+
+    \begin{table}[ht]
+        \centering
+        \begin{tabular}{|l|l|}
+            \hline
+            \textbf{řešení}    & \textbf{příkaz}                                      \\ \hline
+            sekvenční & \const{g++ --std=c++11 -O3 -funroll-loops}          \\ \hline
+            OpenMP    & \const{g++ --std=c++11 -O3 -funroll-loops -fopenmp} \\ \hline
+            MPI       & \const{mpicxx --std=c++11 -lm -O3 -funroll-loops -fopenmp}   \\ \hline
+        \end{tabular}
+        \caption{Kompilační příkazy používané automatizačními skripty.}
+        \label{tab:compilation-short}
+    \end{table}
+
+\section{Literatura}
+    Pro vypracování tohoto reportu jsem vycházel z vlastních měření na výpočetním svazku STAR dostupného na adrese \url{star.fit.cvut.cz} a
+    materiálů předmětu NI-PDP dostupných na \url{https://courses.fit.cvut.cz/}.
+
+    \section{Příloha: Naměřené výsledky v tabulkách}
+
+    \subsection{Naměřené časy}
+
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{|c|c|c|}
+            \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}m{]} \\ \hline
+            \multirow{8}{*}{saj7}  & 1  & 0.251 \\
+            & 2  & 0.311 \\
+            & 4  & 0.017 \\
+            & 6  & 0.075 \\
+            & 8  & 0.047 \\
+            & 10 & 0.019 \\
+            & 16 & 0.004 \\
+            & 20 & 0.006 \\ \hline
+            \multirow{8}{*}{saj10} & 1  & 2.199 \\
+            & 2  & 3.321 \\
+            & 4  & 2.077 \\
+            & 6  & 1.695 \\
+            & 8  & 1.428 \\
+            & 10 & 1.078 \\
+            & 16 & 1.439 \\
+            & 20 & 1.624 \\ \hline
+            \multirow{8}{*}{saj12} & 1  & 9.555 \\
+            & 2  & $\infty$   \\
+            & 4  & 6.303 \\
+            & 6  & 8.426 \\
+            & 8  & 8.113 \\
+            & 10 & 5.946 \\
+            & 16 & $\infty$   \\
+            & 20 & 5.654 \\ \hline
+        \end{tabular}
+        \caption{OpenMP task algoritmus -- doba běhu v minutách.}
+        \label{tab:openmp-task}
+    \end{table}
+
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{|c|c|c|}
+            \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}m{]} \\ \hline
+            \multirow{8}{*}{saj7}  & 1  & 5.207 \\
+            & 2  & 4.935 \\
+            & 4  & 2.283 \\
+            & 6  & 0.944 \\
+            & 8  & 0.775 \\
+            & 10 & 0.005 \\
+            & 16 & 0.007 \\
+            & 20 & 0.004 \\ \hline
+            \multirow{8}{*}{saj10} & 1  & 2.032 \\
+            & 2  & 2.948 \\
+            & 4  & 2.133 \\
+            & 6  & 1.817 \\
+            & 8  & 1.667 \\
+            & 10 & 1.642 \\
+            & 16 & 1.686 \\
+            & 20 & 1.368 \\ \hline
+            \multirow{8}{*}{saj12} & 1  & 9.610 \\
+            & 2  & 8.232 \\
+            & 4  & 6.927 \\
+            & 6  & 5.880 \\
+            & 8  & 6.409 \\
+            & 10 & 6.695 \\
+            & 16 & 4.788 \\
+            & 20 & 8.986 \\ \hline
+        \end{tabular}
+        \caption{OpenMP data algoritmus -- doba běhu v minutách.}
+        \label{tab:openmp-data}
+    \end{table}
+
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{|c|c|c|c|}
+            \hline
+            \textbf{instance} & \textbf{\#jader} & \textbf{\#node} & \multicolumn{1}{c|}{\textbf{doba běhu} {[}m{]}} \\ \hline
+            \multirow{10}{*}{saj7}  & 6  & 3 & 1.891 \\
+            & 6  & 4 & 1.630 \\
+            & 8  & 3 & 1.518 \\
+            & 8  & 4 & 1.318 \\
+            & 12 & 3 & 1.316 \\
+            & 12 & 4 & 1.210 \\
+            & 16 & 3 & 1.294 \\
+            & 16 & 4 & 1.141 \\
+            & 20 & 3 & 1.269 \\
+            & 20 & 4 & 1.210 \\ \hline
+            \multirow{10}{*}{saj10} & 6  & 3 & 0.912 \\
+            & 6  & 4 & 0.583 \\
+            & 8  & 3 & 0.787 \\
+            & 8  & 4 & 0.542 \\
+            & 12 & 3 & 0.789 \\
+            & 12 & 4 & 0.502 \\
+            & 16 & 3 & 0.713 \\
+            & 16 & 4 & 0.520 \\
+            & 20 & 3 & 0.746 \\
+            & 20 & 4 & 0.521 \\ \hline
+            \multirow{10}{*}{saj12} & 6  & 3 & 4.111 \\
+            & 6  & 4 & 3.578 \\
+            & 8  & 3 & 3.409 \\
+            & 8  & 4 & 3.054 \\
+            & 12 & 3 & 3.267 \\
+            & 12 & 4 & 2.638 \\
+            & 16 & 3 & 3.021 \\
+            & 16 & 4 & 2.783 \\
+            & 20 & 3 & 2.703 \\
+            & 20 & 4 & 2.849 \\ \hline
+        \end{tabular}
+        \caption{MPI algoritmus.}
+        \label{tab:mpi}
+    \end{table}
 
     \subsection{Zrychlení}
 
@@ -587,332 +743,33 @@
         \end{tabular}
         \caption{datový paralelismus}
         \label{tab:efektivita-openmp-data}
-    \end{subtable}%
+        \end{subtable}%
 
         \begin{subtable}{.5\linewidth}\centering
-            \centering
-            \begin{tabular}{|c|c|c|l|l|l|l|l|l|l|l|}
-                \hline
-                \textbf{instance / (p,n)} &
-                \textbf{(6,3)} &
-                \textbf{(6,4)} &
-                \multicolumn{1}{c|}{\textbf{(8,3)}} &
-                \multicolumn{1}{c|}{\textbf{(8,4)}} &
-                \textbf{12,3)} &
-                \textbf{(12,4)} &
-                \textbf{(16,3)} &
-                \textbf{(16,4)} &
-                \textbf{(20,3)} &
-                \textbf{(20,4)} \\ \hline
-                saj7  & 0.133 & 0.116 & 0.125 & 0.108 & 0.096 & 0.078 & 0.073 & 0.062 & 0.060 & 0.047 \\ \hline
-                saj10 & 0.105 & 0.123 & 0.091 & 0.100 & 0.061 & 0.072 & 0.050 & 0.052 & 0.039 & 0.041 \\ \hline
-                saj12 & 0.110 & 0.095 & 0.100 & 0.084 & 0.069 & 0.064 & 0.056 & 0.046 & 0.050 & 0.036 \\ \hline
-            \end{tabular}
-            \caption{MPI}
-            \label{tab:efektivita-mpi}
+        \centering
+        \begin{tabular}{|c|c|c|l|l|l|l|l|l|l|l|}
+            \hline
+            \textbf{instance / (p,n)} &
+            \textbf{(6,3)} &
+            \textbf{(6,4)} &
+            \multicolumn{1}{c|}{\textbf{(8,3)}} &
+            \multicolumn{1}{c|}{\textbf{(8,4)}} &
+            \textbf{12,3)} &
+            \textbf{(12,4)} &
+            \textbf{(16,3)} &
+            \textbf{(16,4)} &
+            \textbf{(20,3)} &
+            \textbf{(20,4)} \\ \hline
+            saj7  & 0.133 & 0.116 & 0.125 & 0.108 & 0.096 & 0.078 & 0.073 & 0.062 & 0.060 & 0.047 \\ \hline
+            saj10 & 0.105 & 0.123 & 0.091 & 0.100 & 0.061 & 0.072 & 0.050 & 0.052 & 0.039 & 0.041 \\ \hline
+            saj12 & 0.110 & 0.095 & 0.100 & 0.084 & 0.069 & 0.064 & 0.056 & 0.046 & 0.050 & 0.036 \\ \hline
+        \end{tabular}
+        \caption{MPI}
+        \label{tab:efektivita-mpi}
         \end{subtable}
 
-    \caption{Naměřená efektivita. Počet výpočetních vláken je označen jako p, počet uzlů jako n (pouze u MPI). Barevně zvýrazněná je efektivita větší než 1.}
+        \caption{Naměřená efektivita. Počet výpočetních vláken je označen jako p, počet uzlů jako n (pouze u MPI). Barevně zvýrazněná je efektivita větší než 1.}
         \label{tab:efektivita}
     \end{table}
-
-    \subsection{Naměřené časy}
-
-
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{|c|c|c|}
-            \hline
-            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}m{]} \\ \hline
-            \multirow{8}{*}{saj7}  & 1  & 0.251 \\
-            & 2  & 0.311 \\
-            & 4  & 0.017 \\
-            & 6  & 0.075 \\
-            & 8  & 0.047 \\
-            & 10 & 0.019 \\
-            & 16 & 0.004 \\
-            & 20 & 0.006 \\ \hline
-            \multirow{8}{*}{saj10} & 1  & 2.199 \\
-            & 2  & 3.321 \\
-            & 4  & 2.077 \\
-            & 6  & 1.695 \\
-            & 8  & 1.428 \\
-            & 10 & 1.078 \\
-            & 16 & 1.439 \\
-            & 20 & 1.624 \\ \hline
-            \multirow{8}{*}{saj12} & 1  & 9.555 \\
-            & 2  & $\infty$   \\
-            & 4  & 6.303 \\
-            & 6  & 8.426 \\
-            & 8  & 8.113 \\
-            & 10 & 5.946 \\
-            & 16 & $\infty$   \\
-            & 20 & 5.654 \\ \hline
-        \end{tabular}
-        \caption{OpenMP task algoritmus -- doba běhu v minutách.}
-        \label{tab:openmp-task}
-    \end{table}
-
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{|c|c|c|}
-            \hline
-            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{\#jader}} & \textbf{doba běhu} {[}m{]} \\ \hline
-            \multirow{8}{*}{saj7}  & 1  & 5.207 \\
-            & 2  & 4.935 \\
-            & 4  & 2.283 \\
-            & 6  & 0.944 \\
-            & 8  & 0.775 \\
-            & 10 & 0.005 \\
-            & 16 & 0.007 \\
-            & 20 & 0.004 \\ \hline
-            \multirow{8}{*}{saj10} & 1  & 2.032 \\
-            & 2  & 2.948 \\
-            & 4  & 2.133 \\
-            & 6  & 1.817 \\
-            & 8  & 1.667 \\
-            & 10 & 1.642 \\
-            & 16 & 1.686 \\
-            & 20 & 1.368 \\ \hline
-            \multirow{8}{*}{saj12} & 1  & 9.610 \\
-            & 2  & 8.232 \\
-            & 4  & 6.927 \\
-            & 6  & 5.880 \\
-            & 8  & 6.409 \\
-            & 10 & 6.695 \\
-            & 16 & 4.788 \\
-            & 20 & 8.986 \\ \hline
-        \end{tabular}
-        \caption{OpenMP data algoritmus -- doba běhu v minutách.}
-        \label{tab:openmp-data}
-    \end{table}
-
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{|c|c|c|c|}
-            \hline
-            \textbf{instance} & \textbf{\#jader} & \textbf{\#node} & \multicolumn{1}{c|}{\textbf{doba běhu} {[}m{]}} \\ \hline
-            \multirow{10}{*}{saj7}  & 6  & 3 & 1.891 \\
-            & 6  & 4 & 1.630 \\
-            & 8  & 3 & 1.518 \\
-            & 8  & 4 & 1.318 \\
-            & 12 & 3 & 1.316 \\
-            & 12 & 4 & 1.210 \\
-            & 16 & 3 & 1.294 \\
-            & 16 & 4 & 1.141 \\
-            & 20 & 3 & 1.269 \\
-            & 20 & 4 & 1.210 \\ \hline
-            \multirow{10}{*}{saj10} & 6  & 3 & 0.912 \\
-            & 6  & 4 & 0.583 \\
-            & 8  & 3 & 0.787 \\
-            & 8  & 4 & 0.542 \\
-            & 12 & 3 & 0.789 \\
-            & 12 & 4 & 0.502 \\
-            & 16 & 3 & 0.713 \\
-            & 16 & 4 & 0.520 \\
-            & 20 & 3 & 0.746 \\
-            & 20 & 4 & 0.521 \\ \hline
-            \multirow{10}{*}{saj12} & 6  & 3 & 4.111 \\
-            & 6  & 4 & 3.578 \\
-            & 8  & 3 & 3.409 \\
-            & 8  & 4 & 3.054 \\
-            & 12 & 3 & 3.267 \\
-            & 12 & 4 & 2.638 \\
-            & 16 & 3 & 3.021 \\
-            & 16 & 4 & 2.783 \\
-            & 20 & 3 & 2.703 \\
-            & 20 & 4 & 2.849 \\ \hline
-        \end{tabular}
-        \caption{MPI algoritmus.}
-        \label{tab:mpi}
-    \end{table}
-
-
-
-    \section{Závěr}
-
-%    Celkove zhodnoceni semestralni prace a zkusenosti ziskanych behem semestru.
-    Cílem předmětu bylo si na jednoduchém úkolu prohledávání stavového prostoru v šachovnici vyzkoušet metody pro
-    nalezení optimálního řešení. Nejdříve jsem implementoval jednoduché sekveční řešení. To jsem dále paralelizoval
-    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace – datová a tasková.
-    Použití OpenMP mi nedělalo větší problémy, protože se stačí pouze zamyslet a chytře do sekvenčného kódu doplnit
-    pár direktiv případně dopsat jednu/dvě funkce. Navíc se pod OpenMP dá kód rozumně debugovat. Větší problém jsem
-    měl s MPI. Pro jeho použití jsem musel doplnit a přepsat značnou část fungujícího OpenMP kódu. Nejvíce práce na
-    MPI mi zabrala serializace/deserializace instancí a řešení deadlocků při posílání.
-
-    \newpage
-    \section{Spuštění a překlad}
-    Skripty ve výpisech \ref{listing:openmp-runner} a \ref{listing:mpi-runner}  automatizují překlad a spuštění OpenMP a MPI řešení na svazku STAR.
-    Pro sekvenční úlohu jsem skript nevytvářel, protože rychlejší bylo ruční měření a překlad. Kompletní
-    skripty i s konfiguračními soubory jsou volně dostupná na \url{https://github.com/TaIos/ni-pdp-vysledky-mereni-star}.
-    Pro stručnost uvádím tabulku \ref{tab:compilation-short}, která zobrazuje pouze příkazy, které skripty používají pro překlad.
-
-    \begin{table}[ht]
-        \centering
-        \begin{tabular}{|l|l|}
-            \hline
-            \textbf{řešení}    & \textbf{příkaz}                                      \\ \hline
-            sekvenční & \const{g++ --std=c++11 -O3 -funroll-loops}          \\ \hline
-            OpenMP    & \const{g++ --std=c++11 -O3 -funroll-loops -fopenmp} \\ \hline
-            MPI       & \const{mpicxx --std=c++11 -lm -O3 -funroll-loops -fopenmp}   \\ \hline
-        \end{tabular}
-        \caption{Kompilační příkazy používané skripty.}
-        \label{tab:compilation-short}
-    \end{table}
-
-
-
-    \pagebreak
-    \newgeometry{top=20pt}
-    \begin{figure}[]
-        \centering
-        \begin{cminted}[fontsize=\small]{bash}
-CPP_PROGRAM_TEMPLATE='main.template.cpp'
-RUN_SCRIPT_TEMPLATE='../serial_job.template.sh'
-CPP_COMPILE="g++"
-CPP_FLAGS="--std=c++11 -O3 -funroll-loops -fopenmp"
-QRUN_CMD="qrun2 20c 1 pdp_serial"
-DATA_PATH="/home/saframa6/ni-pdp-semestralka/data"
-
-createDirectory() {
-    if [ ! -d ${1} ]
-        then
-        mkdir -p ${1}
-    fi
-}
-
-cd ${1:-$(pwd)}
-OUT_DIR="out$(find . -mindepth 1 -maxdepth 1 | sed 's/^\.\///g' | grep -P '^out\d*$' | wc -l)"
-
-createDirectory ${OUT_DIR}
-
-INSTANCES=(7 10 12) # saj instance id
-PROCNUMS=(1 2 4 6 8 10 16 20) # number of openmp cores
-for INSTANCE in ${INSTANCES[*]}
-do
-    for PROCNUM in ${PROCNUMS[*]}
-    do
-        WORKDIR=$(realpath "${OUT_DIR}/saj${INSTANCE}-p${PROCNUM}")
-        createDirectory ${WORKDIR}
-
-        CPP_PROGRAM=$(realpath "${WORKDIR}/main.cpp")
-        EXE_PROGRAM=$(realpath "${WORKDIR}/run.out")
-        RUN_SCRIPT=$(realpath "${WORKDIR}/openmp-job-saj${INSTANCE}-p${PROCNUM}.sh")
-        STDERR=$(realpath ${WORKDIR}/stderr)
-        STDOUT=$(realpath ${WORKDIR}/stdout)
-        touch ${STDERR} ${STDOUT}
-
-        echo $WORKDIR
-        echo -e "\tCPP program: ${CPP_PROGRAM}"
-        echo -e "\tEXE program: ${EXE_PROGRAM}"
-        echo -e "\tRUN script: ${RUN_SCRIPT}"
-
-        sed "s/{PROCNUM}/$PROCNUM/g" ${CPP_PROGRAM_TEMPLATE} > ${CPP_PROGRAM}
-        echo -e "\tCOMPILE: ${CPP_COMPILE} ${CPP_FLAGS} ${CPP_PROGRAM} -o ${EXE_PROGRAM}"
-        ${CPP_COMPILE} ${CPP_FLAGS} ${CPP_PROGRAM} -o ${EXE_PROGRAM}
-
-        sed "
-            s|{EXE_PROGRAM}|$EXE_PROGRAM|g;
-            s|{ARGUMENTS}|$DATA_PATH/saj$INSTANCE.txt|g;
-            s|{STDOUT}|$STDOUT|g;
-            s|{STDERR}|$STDERR|g;
-            " ${RUN_SCRIPT_TEMPLATE} > ${RUN_SCRIPT}
-        echo -e "\tQRUN: ${QRUN_CMD} ${RUN_SCRIPT}"
-
-        ${QRUN_CMD} ${RUN_SCRIPT}
-        echo "============================="
-    done
-done
-
-echo "DONE"
-exit 0
-        \end{cminted}
-        \caption{Bash skript \href{https://github.com/TaIos/ni-pdp-vysledky-mereni-star/blob/master/openmp/tester-openmp.sh}{tester-openmp.sh} pro spuštění a otestování OpenMP
-                    řešení na svazku STAR.}
-        \label{listing:openmp-runner}
-    \end{figure}
-
-\pagebreak
-
-\begin{figure}[]
-    \centering
-    \begin{cminted}[fontsize=\small]{bash}
-CPP_PROGRAM_TEMPLATE='main.template.cpp'
-RUN_SCRIPT_TEMPLATE='parallel_job.template.sh'
-CPP_COMPILE="mpicxx"
-CPP_FLAGS="--std=c++11 -lm -O3 -funroll-loops -fopenmp"
-QRUN_CMD_TEMPLATE="qrun2 20c {NODENUM} pdp_long"  # pdp_fast/pdp_long
-DATA_PATH="/home/saframa6/ni-pdp-semestralka/data"
-
-createDirectory() {
-    if [ ! -d ${1} ]
-        then
-        mkdir -p ${1}
-    fi
-}
-
-cd ${1:-$(pwd)}
-OUT_DIR="out$(find . -mindepth 1 -maxdepth 1 | sed 's/^\.\///g' | grep -P '^out\d*$' | wc -l)"
-
-createDirectory ${OUT_DIR}
-
-INSTANCES=(7 10 12) # saj instance id
-PROCNUMS=(6 8 12 16 20) # number of openmp cores
-NODENUMS=(3 4) # total number of MPI nodes
-for INSTANCE in ${INSTANCES[*]}
-do
-    for PROCNUM in ${PROCNUMS[*]}
-    do
-        for NODENUM in ${NODENUMS[*]}
-        do
-            WORKDIR=$(realpath "${OUT_DIR}/saj${INSTANCE}-n${NODENUM}-p${PROCNUM}")
-            createDirectory ${WORKDIR}
-
-            CPP_PROGRAM=$(realpath "${WORKDIR}/main.cpp")
-            EXE_PROGRAM=$(realpath "${WORKDIR}/run.out")
-            RUN_SCRIPT=$(realpath "${WORKDIR}/mpi-job-saj${INSTANCE}-n${NODENUM}-p${PROCNUM}.sh")
-            STDERR=$(realpath ${WORKDIR}/stderr)
-            STDOUT=$(realpath ${WORKDIR}/stdout)
-            touch ${STDERR} ${STDOUT}
-
-            echo $WORKDIR
-            echo -e "\tCPP program: ${CPP_PROGRAM}"
-            echo -e "\tEXE program: ${EXE_PROGRAM}"
-            echo -e "\tRUN script: ${RUN_SCRIPT}"
-
-            QRUN_CMD=$(sed "s/{NODENUM}/${NODENUM}/g"  <<< ${QRUN_CMD_TEMPLATE})
-
-            sed "s/{PROCNUM}/$PROCNUM/g" ${CPP_PROGRAM_TEMPLATE} > ${CPP_PROGRAM}
-
-            echo -e "\tCOMPILE: ${CPP_COMPILE} ${CPP_FLAGS} ${CPP_PROGRAM} -o ${EXE_PROGRAM}"
-            ${CPP_COMPILE} ${CPP_FLAGS} ${CPP_PROGRAM} -o ${EXE_PROGRAM}
-
-            sed "
-                s|{EXE_PROGRAM}|$EXE_PROGRAM|g;
-                s|{ARGUMENTS}|$DATA_PATH/saj$INSTANCE.txt|g;
-                s|{STDOUT}|$STDOUT|g;
-                s|{STDERR}|$STDERR|g;
-                " ${RUN_SCRIPT_TEMPLATE} > ${RUN_SCRIPT}
-            echo -e "\tQRUN: ${QRUN_CMD} ${RUN_SCRIPT}"
-
-            ${QRUN_CMD} ${RUN_SCRIPT}
-            echo "============================="
-        done
-    done
-done
-
-echo "DONE"
-exit 0
-    \end{cminted}
-    \caption{Bash skript \href{https://github.com/TaIos/ni-pdp-vysledky-mereni-star/blob/master/mpi/tester-mpi.sh}{tester-mpi.sh} pro spuštění a otestování MPI
-                    řešení na svazku STAR. }
-    \label{listing:mpi-runner}
-\end{figure}
-
-\restoregeometry
-
-\section{Literatura}
-    Pro vypracování tohoto reportu jsem vycházel z vlastních měření na výpočetním svazku STAR dostupného na adrese \url{star.fit.cvut.cz} a
-    materiálů předmětu NI-PDP dostupných na \url{https://courses.fit.cvut.cz/}.
 
 \end{document}
