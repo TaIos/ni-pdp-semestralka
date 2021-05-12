@@ -204,7 +204,7 @@
     základní jednotka, kterou je OpenMP schopno přidělit vláknu a provést tak výpočet. Pro zadanou úlohu
     task znamená šachovnici s pozicí všech figurek a historií tahů. Takto vytvořené tasky OpenMP přidává
     do svého taskpoolu, z kterého si je vlákna vyzvedávají a řeší. Dále všechny vlákna řešící tasky z
-    taskpoolu sdílejí nejlepší řešení $d_{best}$. Heuristiky jsou totožné jako v podsekci \ref{subsec:seq-heuristics}.
+    taskpoolu sdílejí nejlepší řešení. Heuristiky jsou totožné jako v podsekci \ref{subsec:seq-heuristics}.
 
     \subsection{Konstanty a parametry pro škálování algoritmu}
     Taskový paralelní algoritmus implementovaný pomocí OpenMP umožňuje nastavení konstant, které ovlivní
@@ -284,8 +284,8 @@
 
 
     \pagebreak
-    \label{sec:data-par}
     \section{Popis paralelniho algoritmu a jeho implementace v OpenMP - datový paralelismus}
+    \label{sec:data-par}
     Datový paralelismus v OpenMP pracuje s datově nezávislými celky, které podle určené
     strategie přiděluje vláknům na zpracování. Nezávislý datový celek je pro zadanou úlohu
     šachovnice s pozicí všech figurek a historií tahů.
@@ -324,7 +324,7 @@
     \end{table}
 
     \subsection{Pseudokód paralelního algoritmu — datový paralelismus}
-    Datový paralelismus použává sekvenční algoritmus \ref{alg:sequential}.
+    Datový paralelismus používá sekvenční algoritmus \ref{alg:sequential}.
     Přidává navíc synchronizaci mezi vlákny pro přepisování nejlepšího řešení $S^*$.
     Ta je identická jako u taskového OpenMP algoritmu \ref{alg:openmp-task}.
 
@@ -364,7 +364,7 @@
     vygeneruje datově nezávislé instance. Ty pak serializuje a společně s globálním nejlepším řešením je
     pošle přes MPI interface slave procesům. Každý z nich pomocí datového paralelismu vyřeší přijmuté řešení a
     odešlě ho zpět master procesu. Pak požádá master proces o další instanci k vyřešení.
-    Pokud master vláknu nemá už žádné instance k vyřešení, pošle slave procesu ukončující zprávu.
+    Pokud master vlákno nemá už žádné instance k vyřešení, pošle slave procesu ukončující zprávu.
     Více viz algoritmus \ref{alg:mpi}.
 
     \subsection{Konstanty a parametry pro škálování algoritmu}
@@ -453,6 +453,10 @@
     Všechny tabulky s naměřenými daty jsou z důvodu jejich velikosti v příloze \ref{app:vysledky}.
     Zde je jejich diskuze a vyhodnocení. Měření probíhala v době, kdy na svazku STAR bylo ve frontě
     průměrně 100 naplánovaných běhů.
+
+    Při testování OpenMP task na svazku STAR nedoběhly dvě instance pro \verb|saj12|. Důvodem je pravděpodobně datová
+    závislost. OpenMP plánovač naplánoval OpenMP task, který by vedl k výraznému prořezání stavového prostoru pozdě.
+
     \vspace{3mm}
 
     \navesti{Zrychlení} Z tabulek \ref{tab:speedup} je patrné, že v několika případech nastalo superlineární zrychlení.
@@ -476,7 +480,7 @@
      bych více měření a způměroval bych výsledky. Z jednoho měření v tomto případě nic vyvodit nedokážu.
      Škálovatelnost u OpenMP data, viz tabulka \ref{tab:openmp-data}, se podobá taskové -- bylo by potřeba více měření.
      Škálovatelnost MPI, viz tabulka \ref{tab:mpi}, je prokazatelná. Pro zvyšující se počet výpočetních jader a node
-    se snižuje čas. Nejedná se ale o výrazný rozdíl.
+    se snižuje čas. Nejedná se ale o výrazné zrychlení.
 
     \pagebreak
     \section{Spuštění a překlad}
@@ -507,9 +511,9 @@
 
     Cílem předmětu bylo si na jednoduchém úkolu prohledávání stavového prostoru v šachovnici vyzkoušet metody pro
     nalezení optimálního řešení. Nejdříve jsem implementoval jednoduché sekveční řešení. To jsem dále paralelizoval
-    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace –- datová a tasková.
+    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace -- datová a tasková.
     Použití OpenMP mi nedělalo větší problémy, protože se stačí pouze zamyslet a chytře do sekvenčného kódu doplnit
-    pár direktiv případně dopsat jednu/dvě funkce. Navíc se pod OpenMP dá kód rozumně debugovat. Větší problém jsem
+    pár direktiv případně dopsat pár funkcí. Navíc se pod OpenMP dá kód rozumně debugovat. Větší problém jsem
     měl s MPI. Pro jeho použití jsem musel doplnit a přepsat značnou část fungujícího OpenMP kódu. Na MPI byla
     nejpracnější serializace/deserializace instancí a řešení deadlocků. Nejvíce času mi v průběhu semestru ale zabralo
     testování na svazku STAR a psaní tohoto reportu.
@@ -558,7 +562,7 @@
             & 16 & $\infty$   \\
             & 20 & 5.654 \\ \hline
         \end{tabular}
-        \caption{OpenMP task algoritmus -- doba běhu v minutách.}
+        \caption{OpenMP task -- doba běhu v minutách.}
         \label{tab:openmp-task}
     \end{table}
 
@@ -592,7 +596,7 @@
             & 16 & 4.788 \\
             & 20 & 8.986 \\ \hline
         \end{tabular}
-        \caption{OpenMP data algoritmus -- doba běhu v minutách.}
+        \caption{OpenMP data -- doba běhu v minutách.}
         \label{tab:openmp-data}
     \end{table}
 
@@ -632,7 +636,7 @@
             & 20 & 3 & 2.703 \\
             & 20 & 4 & 2.849 \\ \hline
         \end{tabular}
-        \caption{MPI algoritmus -- doba běhu v minutách.}
+        \caption{MPI -- doba běhu v minutách.}
         \label{tab:mpi}
     \end{table}
 
