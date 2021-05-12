@@ -15,6 +15,7 @@
 \usepackage{fancyvrb}
 \usepackage{listings}
 \usepackage[czech]{babel}
+\newcommand{\navesti}[1]{\textbf{\textit{{#1}.}}}
 \newcommand{\heuristika}[1]{\textbf{\textit{Heuristika {#1}.}}}
 \newcommand{\const}[1]{\mintinline{bash}{#1}}
 \newcommand{\konstanta}[1]{\textbf{\textit{Konstanta}} \const{#1}.}
@@ -450,17 +451,29 @@
     \label{sec:namerene-vysledky}
     \section{Vyhodnocení naměřených výsledků}
     Všechny tabulky s naměřenými daty jsou z důvodu jejich velikosti v příloze \ref{app:vysledky}.
-    Zde je jejich diskuze a vyhodnocení.
+    Zde je jejich diskuze a vyhodnocení. Měření probíhala v době, kdy na svazku STAR bylo ve frontě
+    průměrně 100 naplánovaných běhů.
 
-    \begin{enumerate}
-        \item Zvolte tri instance problemu s takovou velikosti vstupnich dat, pro ktere ma sekvencni
-        algoritmus casovou slozitost mezi 1 a 10 minutami.
-        Pro mereni cas potrebny na cteni dat z disku a ulozeni na disk neuvazujte a zakomentujte
-        ladici tisky, logy, zpravy a vystupy.
-        \item Merte paralelni cas pri pouziti $i=2,\cdot,60$ vypocetnich jader.
-        \item Tabulkova a pripadne graficky zpracovane namerene hodnoty casove slozitosti měernych instanci behu programu s popisem instanci dat. Z namerenych dat sestavte grafy zrychleni $S(n,p)$.
-        \item Analyza a hodnoceni vlastnosti paralelniho programu, zvlaste jeho efektivnosti a skalovatelnosti, pripadne popis zjisteneho superlinearniho zrychleni.
-    \end{enumerate}
+    \navesti{Zrychlení} Z tabulek \ref{tab:speedup} je patrné, že v několika případech nastalo superlineární zrychlení.
+    To se projevilo nejvýrazněji u OpenMP task. Důvodem může být plánovač, který OpenMP tasky z poolu přiřazuje vláknům.
+    Přiřazování se s největší pravděpodobností děje nedeterministicky. Může tak nastat, že oproti sekvenčnímu řešení,
+    které je vždy deterministické, dojde k výraznému prořezání stavového prostoru hned při prvních vyřešených istancí.
+    Naopak horší než lineární zrychlení dosáhly všechny MPI implementace. Důvodem je pravděpodobně moje implementace,
+    kdy slave proces komunikuje a tedy i updatuje nejlepší řešení pouze pokud kompletně prohledal přidělený stavový prostor.
+
+    \navesti{Efektivita} Efektivita výpočtu v tabulkách \ref{tab:efektivita} kopíruje anomálii superlineárního
+    zrychlení -- u OpenMP je efektivita větší než 1, což by nemělo nastávat. Důvodem je pravděpodobně zase
+    datová závislost úlohy. Naopak u MPI je efektivita velice nízká a důvod kopíruje zrychlení -- implementace
+    komunikace mezi MPI procesy.
+
+    \navesti{Škálovatelnost} Ideální škálovatelnost úlohy by byla taková, že při zvyšování výpočetního výkonu
+    klesá výpočetní čas. U OpenMP task, viz tabulka \ref{tab:openmp-task}, toto lze pozorovat se zvyšováním počtu výpočetních jader. Zajímavá je
+    ale instance \verb|saj10|, kde pro 16, 20 jader výkon klesl. Toto by mohlo být způsobeno zvýšenou režií
+     na přepínání kontextu. Stejná chování ale nezle pozorovat pro další instance. Pokud bych měl čas, udělal
+     bych více měření a způměroval bych výsledky. Z jednoho měření v tomto případě nic vyvodit nedokážu.
+     Škálovatelnost u OpenMP data, viz tabulka \ref{tab:openmp-data}, se podobá taskové -- bylo by potřeba více měření.
+     Škálovatelnost MPI, viz tabulka \ref{tab:mpi}, je prokazatelná. Pro zvyšující se počet výpočetních jader a node
+    se snižuje čas. Nejedná se ale o výrazný rozdíl.
 
     \pagebreak
     \section{Spuštění a překlad}
