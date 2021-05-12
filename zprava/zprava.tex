@@ -46,10 +46,8 @@
     \end{center}
 
 
-    \label{sec:sequential}
-
-
     \section{Definice problému a popis sekvenčního algoritmu}
+    \label{sec:sequential1}
 
     Program řeší problém nalezení optimální posloupnosti tahů pro střídavé tahy střelce a jezdce, která vede k sebrání
     všech pěšců rozmístěných na šachovnici. První tah je proveden střelcem. Jedná se o analogii problému obchodního cestujícího.
@@ -196,10 +194,12 @@
     \end{algorithm}
 
     \label{sec:task-par}
+
+
     \section{Popis paralelního algoritmu a jeho implementace v OpenMP - taskový paralelismus}
 
     Taskový paralelní algoritmus je naimplementován pomocí OpenMP. Hlavní rozdíl oproti sekvenčnímu algoritmu
-    popsaném v \ref{sec:sequential} je rozdělení úlohy prohledávání stavového prostoru na tasky. Task je
+    popsaném v sekci \ref{sec:sequential1} je rozdělení úlohy prohledávání stavového prostoru na tasky. Task je
     základní jednotka, kterou je OpenMP schopno přidělit vláknu a provést tak výpočet. Pro zadanou úlohu
     task znamená šachovnici s pozicí všech figurek a historií tahů. Takto vytvořené tasky OpenMP přidává
     do svého taskpoolu, z kterého si je vlákna vyzvedávají a řeší. Dále všechny vlákna řešící tasky z
@@ -208,11 +208,12 @@
     \subsection{Konstanty a parametry pro škálování algoritmu}
     Taskový paralelní algoritmus implementovaný pomocí OpenMP umožňuje nastavení konstant, které ovlivní
     logiku funkce programu a tedy i výpočetní čas. Změněny byly pouze zde zmíněné konstanty. Jejich hodnota
-    byla určena empiricky na vstupních datech. Nejedná se o optimální hodnoty, protože jejich nalezení je
+    byla určena empiricky na vstupních datech pomocí měření. Nejedná se o optimální hodnoty, protože jejich nalezení je
     stejně těžký problém jako nalezení optimální cesty v původním problému.
 
+    \pagebreak
     \konstanta{TASK_THRESHOLD}  Pokud vlákno řeší instanci a délka její cesty je delší než \const{TASK_THRESHOLD}, nevytváří další
-    OpenMP tasky a nepřidává je do taskpoolu. Zadanou instaci vyřeší použitím sekvenčního algoritmu popsaném v sekci \ref{sec:sequential}.
+    OpenMP tasky a nepřidává je do taskpoolu. Zadanou instaci vyřeší použitím sekvenčního algoritmu popsaném v sekci \ref{sec:sequential1}.
 
     \begin{table}[hb]
         \centering
@@ -237,6 +238,7 @@
         \SetKwFunction{HeuristikaStrelec}{HeuristikaStřelec}
         \SetKwFunction{MakeMove}{ProveďTah}
         \SetKwFunction{FBetterSolutionExists}{existujeLepšíŘešení}
+        \SetKwFunction{Threshold}{TASK\_THRESHOLD}
 
         \SetKwFunction{FMain}{openMpTask}
         \SetKwProg{Fn}{Function}{:}{}
@@ -267,8 +269,12 @@
             \SetKwData{Next}{$S_{next}$}
             \ForAll{$t$ in \Tahy} {
                 \Next = \MakeMove{$S$, $t$}\;
-                \texttt{\#pragma omp task firstprivate($\ldots$)}\;
-                \FMain{\Next, $S^*$}\;
+                \uIf{počet tahů S > \Threshold}{
+                    \FMain{\Next, $S^*$}\;
+                } \Else{
+                    \texttt{\#pragma omp task firstprivate($\ldots$)}\;
+                    \FMain{\Next, $S^*$}\;
+                }\;
             }\;
         }\;
         \caption{OpenMP task}
