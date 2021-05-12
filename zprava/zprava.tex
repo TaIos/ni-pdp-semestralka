@@ -448,11 +448,9 @@
     \label{sec:vysledky}
     
     \label{sec:namerene-vysledky}
-    \section{Naměřené výsledky a vyhodnocení}
-
-    Všechny tabulky s naměřenými daty jsou z důvodu jejich velikosti v sekci \ref{sec:tabulky}.
+    \section{Vyhodnocení naměřených výsledků}
+    Všechny tabulky s naměřenými daty jsou z důvodu jejich velikosti v příloze \ref{app:vysledky}.
     Zde je jejich diskuze a vyhodnocení.
-
 
     \begin{enumerate}
         \item Zvolte tri instance problemu s takovou velikosti vstupnich dat, pro ktere ma sekvencni
@@ -463,20 +461,10 @@
         \item Tabulkova a pripadne graficky zpracovane namerene hodnoty casove slozitosti měernych instanci behu programu s popisem instanci dat. Z namerenych dat sestavte grafy zrychleni $S(n,p)$.
         \item Analyza a hodnoceni vlastnosti paralelniho programu, zvlaste jeho efektivnosti a skalovatelnosti, pripadne popis zjisteneho superlinearniho zrychleni.
     \end{enumerate}
-    \section{Závěr}
 
-%    Celkove zhodnoceni semestralni prace a zkusenosti ziskanych behem semestru.
-    Cílem předmětu bylo si na jednoduchém úkolu prohledávání stavového prostoru v šachovnici vyzkoušet metody pro
-    nalezení optimálního řešení. Nejdříve jsem implementoval jednoduché sekveční řešení. To jsem dále paralelizoval
-    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace – datová a tasková.
-    Použití OpenMP mi nedělalo větší problémy, protože se stačí pouze zamyslet a chytře do sekvenčného kódu doplnit
-    pár direktiv případně dopsat jednu/dvě funkce. Navíc se pod OpenMP dá kód rozumně debugovat. Větší problém jsem
-    měl s MPI. Pro jeho použití jsem musel doplnit a přepsat značnou část fungujícího OpenMP kódu. Nejvíce práce na
-    MPI mi zabrala serializace/deserializace instancí a řešení deadlocků při posílání.
-
-    \newpage
+    \pagebreak
     \section{Spuštění a překlad}
-    Pro automatické testování OpenMP a MPI jsem vytvořil dva skripty. Každý z nich upraví zdrojový kód řešení
+    Pro automatické testování OpenMP a MPI jsem vytvořil dva \verb|bash| skripty. Každý z nich upraví zdrojový kód řešení
     podle potřeby a překompiluje ho. Dále vygeneruje qrun skript, který spustí na svazku STAR. Výsledky uloží na
     předem definované místo. Pro zjednodušení uvádím tabulku \ref{tab:compilation-short}, která ukazuje kompilační příkazy a přepínače
     použité jednotlivými skripty.
@@ -485,7 +473,6 @@
     \href{https://github.com/TaIos/ni-pdp-vysledky-mereni-star/blob/master/openmp/tester-openmp.sh}{tester-openmp.sh}.
     Obdobně pro MPI skriptem \href{https://github.com/TaIos/ni-pdp-vysledky-mereni-star/blob/master/mpi/tester-mpi.sh}{tester-mpi.sh}.
     Pro sekvenční řešení stačilo ruční spouštění.
-
 
     \begin{table}[ht]
         \centering
@@ -500,14 +487,28 @@
         \label{tab:compilation-short}
     \end{table}
 
+    \section{Závěr}
+
+%    Celkove zhodnoceni semestralni prace a zkusenosti ziskanych behem semestru.
+    Cílem předmětu bylo si na jednoduchém úkolu prohledávání stavového prostoru v šachovnici vyzkoušet metody pro
+    nalezení optimálního řešení. Nejdříve jsem implementoval jednoduché sekveční řešení. To jsem dále paralelizoval
+    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace – datová a tasková.
+    Použití OpenMP mi nedělalo větší problémy, protože se stačí pouze zamyslet a chytře do sekvenčného kódu doplnit
+    pár direktiv případně dopsat jednu/dvě funkce. Navíc se pod OpenMP dá kód rozumně debugovat. Větší problém jsem
+    měl s MPI. Pro jeho použití jsem musel doplnit a přepsat značnou část fungujícího OpenMP kódu. Nejvíce práce na
+    MPI mi zabrala serializace/deserializace instancí a řešení deadlocků při posílání.
+
 \section{Literatura}
     Pro vypracování tohoto reportu jsem vycházel z vlastních měření na výpočetním svazku STAR dostupného na adrese \url{star.fit.cvut.cz} a
     materiálů předmětu NI-PDP dostupných na \url{https://courses.fit.cvut.cz/}.
 
-    \section{Příloha: Naměřené výsledky v tabulkách}
 
-    \subsection{Naměřené časy}
+    \appendix
 
+    \label{app:vysledky}
+    \section{Naměřené výsledky}
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% cas
     \begin{table}[h]
         \centering
         \begin{tabular}{|c|c|c|}
@@ -612,12 +613,11 @@
             & 20 & 3 & 2.703 \\
             & 20 & 4 & 2.849 \\ \hline
         \end{tabular}
-        \caption{MPI algoritmus.}
+        \caption{MPI algoritmus -- doba běhu v minutách.}
         \label{tab:mpi}
     \end{table}
 
-    \subsection{Zrychlení}
-
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% zrychleni
     \begin{table}[h]
         \begin{subtable}{.5\linewidth}\centering
         \begin{tabular}{|c|c|c|l|l|l|l|l|l|}
@@ -643,7 +643,7 @@
             saj10 & 0.785 & 0.520 & 0.832 & 1.019 & 1.210 & 1.601 & 1.201 & 1.064 \\ \hline
             saj12 & 0.854 & nan   & 1.295 & 0.969 & 1.006 & 1.373 & nan   & 1.444 \\ \hline
         \end{tabular}
-        \caption{taskový paralelismus} \label{tab:speedup-openmp-task}
+        \caption{OpenMP task -- zrychlení} \label{tab:speedup-openmp-task}
         \end{subtable}%
         \bigskip
         \bigskip
@@ -664,7 +664,7 @@
             saj10 & 0.850 & 0.586 & 0.810 & 0.951 & 1.036 & 1.052                          & 1.025                          & 1.263                          \\ \hline
             saj12 & 0.849 & 0.849 & 1.178 & 1.178 & 1.178 & 1.178                          & 1.178                          & 1.178                          \\ \hline
         \end{tabular}
-        \caption{datový paralelismus} \label{tab:speedup-openmp-data}
+        \caption{OpenMP data -- zrychlení} \label{tab:speedup-openmp-data}
         \end{subtable}%
         \bigskip
         \bigskip
@@ -687,16 +687,15 @@
             saj10 & 1.894 & 2.960 & 2.193 & 3.187 & 2.190 & 3.440 & 2.420 & 3.321 & 2.313 & 3.313 \\ \hline
             saj12 & 1.986 & 2.281 & 2.394 & 2.673 & 2.499 & 3.094 & 2.702 & 2.933 & 3.020 & 2.865 \\ \hline
         \end{tabular}
-        \caption{MPI}\label{tab:speedup-mpi}
+        \caption{MPI -- zrychlení}\label{tab:speedup-mpi}
         \end{subtable}%
 
         \caption{Naměřené zrychlení. Počet výpočetních vláken je označen jako p, počet uzlů jako n (pouze u MPI). Barevně zvýrazněné je superlineární zrychlení.}
         \label{tab:speedup}
     \end{table}
 
-    \subsection{Efektivita}
-
-    \begin{table}[h]
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% efektivita
+    \begin{table}[ht!]
         \begin{subtable}{.5\linewidth}\centering
         \begin{tabular}{|c|c|c|l|l|l|l|l|l|}
             \hline
@@ -721,9 +720,11 @@
             saj10 & 0.785 & 0.260 & 0.208 & 0.170 & 0.151 & 0.160 & 0.075 & 0.053 \\ \hline
             saj12 & 0.854 & nan   & 0.324 & 0.161 & 0.126 & 0.137 & nan   & 0.072 \\ \hline
         \end{tabular}
-        \caption{taskový paralelismus}
+        \caption{OpenMP task -- efektivita}
         \label{tab:efektivita-openmp-task}
         \end{subtable}%
+        \bigskip
+        \bigskip
 
         \begin{subtable}{.5\linewidth}\centering
         \begin{tabular}{|c|c|c|l|l|l|l|l|l|}
@@ -741,9 +742,11 @@
             saj10 & 0.850 & 0.293 & 0.202 & 0.158 & 0.130 & 0.105                         & 0.064                         & 0.063                         \\ \hline
             saj12 & 0.849 & 0.496 & 0.295 & 0.231 & 0.159 & 0.122                         & 0.107                         & 0.045                         \\ \hline
         \end{tabular}
-        \caption{datový paralelismus}
+        \caption{OpenMP data -- efektivita}
         \label{tab:efektivita-openmp-data}
         \end{subtable}%
+        \bigskip
+        \bigskip
 
         \begin{subtable}{.5\linewidth}\centering
         \centering
@@ -764,7 +767,7 @@
             saj10 & 0.105 & 0.123 & 0.091 & 0.100 & 0.061 & 0.072 & 0.050 & 0.052 & 0.039 & 0.041 \\ \hline
             saj12 & 0.110 & 0.095 & 0.100 & 0.084 & 0.069 & 0.064 & 0.056 & 0.046 & 0.050 & 0.036 \\ \hline
         \end{tabular}
-        \caption{MPI}
+        \caption{MPI -- efektivita}
         \label{tab:efektivita-mpi}
         \end{subtable}
 
