@@ -282,9 +282,8 @@
     \end{algorithm}
 
 
-    \label{sec:data-par}
-
     \pagebreak
+    \label{sec:data-par}
     \section{Popis paralelniho algoritmu a jeho implementace v OpenMP - datový paralelismus}
     Datový paralelismus v OpenMP pracuje s datově nezávislými celky, které podle určené
     strategie přiděluje vláknům na zpracování. Nezávislý datový celek je pro zadanou úlohu
@@ -352,23 +351,25 @@
     \end{algorithm}
 
 
+    \pagebreak
+    \label{sec:mpi}
     \section{Popis paralelního algoritmu a jeho implementace v MPI}
 
     Řešení s použitím MPI se skládá ze dvou částí. První je datový OpenMP paralelismus,
-    viz sekce \ref{sec:data-par}. Druhou část tvoří MPI. Ten má za úkol řídit a distribuovat
+    viz sekce \ref{sec:data-par}. Druhou část tvoří MPI. To má za úkol řídit a distribuovat
     výpočet na několika výpočetních uzlech.
 
-    MPI proces začíná tím, že si master vlákno identickým způsobem jako v sekci s datovým paralelismem\ref{sec:data-par}
+    MPI řešení začíná tím, že si master proces identickým způsobem jako v sekci s datovým paralelismem
     vygeneruje datově nezávislé instance. Ty pak serializuje a společně s globálním nejlepším řešením je
-    pošle přes MPI interface slavům. Každý z nich pomocí datového paralelismu popsaného v sekci \ref{sec:data-par}
-    vyřeší přijmuté řešení a odešlě ho zpět master vláknu. Pak požádá master vlákno o další instanci k vyřešení.
-    Pokud master vláknu dojdou instance k vyřešení, rozešlě slavům zprávu o ukončení výpočtu.
+    pošle přes MPI interface slave procesům. Každý z nich pomocí datového paralelismu vyřeší přijmuté řešení a
+    odešlě ho zpět master procesu. Pak požádá master proces o další instanci k vyřešení.
+    Pokud master vláknu nemá už žádné instance k vyřešení, pošle slave procesu ukončující zprávu.
+    Více viz algoritmus \ref{alg:mpi}.
 
     \subsection{Konstanty a parametry pro škálování algoritmu}
-    Protože MPI využívá pro řešení tasků datový OpenMP paralelismus popsaný v sekci \ref{sec:data-par}, jsou
-    zde uvedeny pouze MPI konstanty.
-
-    TODO nastaveni poctu vypocetnich jader
+    Použité konstanty jsou shodné jako v sekci \ref{sec:data-par}, protože MPI využívá pro řešení instancí
+    OpenMP datový paralelismus. Pro MPI nebylo potřeba nastavovat žádné konstanty, které ovlivní rychlost
+    nalezení řešení.
 
     \subsection{Pseudokód}
 
@@ -443,6 +444,8 @@
     \end{algorithm}
 
 
+    \pagebreak
+    \label{sec:vysledky}
     \section{Naměřené výsledky a vyhodnocení}
 
     \begin{enumerate}
