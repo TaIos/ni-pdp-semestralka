@@ -283,6 +283,8 @@
 
 
     \label{sec:data-par}
+
+    \pagebreak
     \section{Popis paralelniho algoritmu a jeho implementace v OpenMP - datový paralelismus}
     Datový paralelismus v OpenMP pracuje s datově nezávislými celky, které podle určené
     strategie přiděluje vláknům na zpracování. Nezávislý datový celek je pro zadanou úlohu
@@ -290,12 +292,12 @@
 
     První krok je vygenerování datově nezávislých celků – to je provedeno před použitím OpenMP.
     Ty jsou následně najednou předány OpenMP. To je určenou strategií rozdělí mezi vlákna.
-    Každé vlákno pak provádí sekvenční řešení problému popsané v sekci \ref{sec:sequential}.
+    Každé vlákno pak provádí sekvenční řešení problému popsané v sekci \ref{sec:sequential1}.
     Vlákna mezi sebou sdílejí pouze nejlepší řešení.
 
     \subsection{Konstanty a parametry pro škálování algoritmu}
     Prvním krokem před spuštěním OpenMP řešení je vytvoření datově nezávislých instancí.
-    Ty se vytvoří použitím sekvečního algoritmu, viz sekce \ref{sec:sequential}.
+    Ty se vytvoří použitím mírně upraveného sekvečního algoritmu \ref{alg:sequential}.
     Jejich počet je regulován konstantou \const{EPOCH_CNT}.
 
     Parametrem OpenMP je konstanta \const{schedule}. Ta určuje politiku přidělování datově nezávislých instací vláknům.
@@ -317,14 +319,14 @@
             \const{EPOCH_CNT} & 3       \\ \hline
             \const{schedule} & dynamic()      \\ \hline
         \end{tabular}
-        \caption{Konstanty použité v OpenMP datovém paralelismu}
+        \caption{Konstanty použité v OpenMP datovém paralelismu.}
         \label{tab:data-par-constants}
     \end{table}
 
     \subsection{Pseudokód paralelního algoritmu — datový paralelismus}
-    Porchetta andouille flank kielbasa. Tail biltong turducken porchetta burgdoggen ground round shoulder ham, hamburger bacon shankle landjaeger fatback pork belly doner. Sirloin doner venison shankle cow, hamburger flank sausage pork belly. Tenderloin venison pancetta corned beef tongue cow pork belly capicola ball tip salami short ribs. Sirloin rump andouille tail shank fatback bresaola.
-
-    Leberkas ham bacon, pastrami turducken pork belly cupim salami kielbasa doner. Turkey cupim meatball capicola jowl cow shank chicken drumstick kevin salami swine pork belly. Drumstick leberkas corned beef beef short loin boudin. Turkey strip steak bacon, ball tip sirloin pork loin pork.
+    Datový paralelismus použává sekvenční algoritmus \ref{alg:sequential}.
+    Přidává navíc synchronizaci mezi vlákny pro přepisování nejlepšího řešení $S^*$.
+    Ta je identická jako u taskového OpenMP algoritmu \ref{alg:openmp-task}.
 
     \subsection{Pseudokód}
 
