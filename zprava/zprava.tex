@@ -453,6 +453,7 @@
     Všechny tabulky s naměřenými daty jsou z důvodu jejich velikosti v příloze \ref{app:vysledky}.
     Zde je jejich diskuze a vyhodnocení. Měření probíhala v době, kdy na svazku STAR bylo ve frontě
     průměrně 100 naplánovaných běhů.
+    \vspace{3mm}
 
     \navesti{Zrychlení} Z tabulek \ref{tab:speedup} je patrné, že v několika případech nastalo superlineární zrychlení.
     To se projevilo nejvýrazněji u OpenMP task. Důvodem může být plánovač, který OpenMP tasky z poolu přiřazuje vláknům.
@@ -460,11 +461,13 @@
     které je vždy deterministické, dojde k výraznému prořezání stavového prostoru hned při prvních vyřešených istancí.
     Naopak horší než lineární zrychlení dosáhly všechny MPI implementace. Důvodem je pravděpodobně moje implementace,
     kdy slave proces komunikuje a tedy i updatuje nejlepší řešení pouze pokud kompletně prohledal přidělený stavový prostor.
+    \vspace{3mm}
 
     \navesti{Efektivita} Efektivita výpočtu v tabulkách \ref{tab:efektivita} kopíruje anomálii superlineárního
     zrychlení -- u OpenMP je efektivita větší než 1, což by nemělo nastávat. Důvodem je pravděpodobně zase
     datová závislost úlohy. Naopak u MPI je efektivita velice nízká a důvod kopíruje zrychlení -- implementace
     komunikace mezi MPI procesy.
+    \vspace{3mm}
 
     \navesti{Škálovatelnost} Ideální škálovatelnost úlohy by byla taková, že při zvyšování výpočetního výkonu
     klesá výpočetní čas. U OpenMP task, viz tabulka \ref{tab:openmp-task}, toto lze pozorovat se zvyšováním počtu výpočetních jader. Zajímavá je
@@ -502,14 +505,17 @@
 
     \section{Závěr}
 
-%    Celkove zhodnoceni semestralni prace a zkusenosti ziskanych behem semestru.
     Cílem předmětu bylo si na jednoduchém úkolu prohledávání stavového prostoru v šachovnici vyzkoušet metody pro
     nalezení optimálního řešení. Nejdříve jsem implementoval jednoduché sekveční řešení. To jsem dále paralelizoval
-    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace – datová a tasková.
+    s použitím OpenMP. Přitom jsem se naučil jak s OpenMP zacházet a dva způsoby paralelizace –- datová a tasková.
     Použití OpenMP mi nedělalo větší problémy, protože se stačí pouze zamyslet a chytře do sekvenčného kódu doplnit
     pár direktiv případně dopsat jednu/dvě funkce. Navíc se pod OpenMP dá kód rozumně debugovat. Větší problém jsem
-    měl s MPI. Pro jeho použití jsem musel doplnit a přepsat značnou část fungujícího OpenMP kódu. Nejvíce práce na
-    MPI mi zabrala serializace/deserializace instancí a řešení deadlocků při posílání.
+    měl s MPI. Pro jeho použití jsem musel doplnit a přepsat značnou část fungujícího OpenMP kódu. Na MPI byla
+    nejpracnější serializace/deserializace instancí a řešení deadlocků. Nejvíce času mi v průběhu semestru ale zabralo
+    testování na svazku STAR a psaní tohoto reportu.
+
+    Dále jsem získal nový pohled na prohledávání stavováho prostoru -- pokud se má prakticky provést s paralelizací
+    výpočtů, velkou roli začíná hrát i datová závislost.
 
 \section{Literatura}
     Pro vypracování tohoto reportu jsem vycházel z vlastních měření na výpočetním svazku STAR dostupného na adrese \url{star.fit.cvut.cz} a
