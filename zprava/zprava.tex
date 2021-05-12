@@ -51,21 +51,21 @@
 
     \section{Definice problému a popis sekvenčního algoritmu}
 
-    Program řeší problém nalezení optimální posloupnosti tahů pro střelce a jezdce, která vede k sebrání
-    všech pěšců rozmístěných na šachovnici. Jedná se o analogii problému obchodního cestujícího.
+    Program řeší problém nalezení optimální posloupnosti tahů pro střídavé tahy střelce a jezdce, která vede k sebrání
+    všech pěšců rozmístěných na šachovnici. První tah je proveden střelcem. Jedná se o analogii problému obchodního cestujícího.
     Nalezení optimálního řešení je proto NP těžký úkol. Řešení v této práci používá bruteforce
     s heuristikami pro ořezávání stavového prostoru.
     \newline
 
-    \label{subsec:popis-vstupu}
-
-    \subsection{Popis vstupu}
+    \label{subsec:popis-vstupu-vystupu}
+    \subsection{Popis vstupu a výstupu}
     Příklad vstupu je uveden na obrázku \ref{fig:board-example}. Obsahuje popořadě vždy
     \begin{enumerate}
         \item přirozené číslo $k$, reprezentující délku strany šachovnice $S$ o velikosti $k \times k$,
         \item horní mez délky optimální posloupnosti $d^{*}_{max}$,
         \item pole souřadnic rozmístěných figurek na šachovnici S.
     \end{enumerate}
+    Výstup obsahuje optimální posloupnost tahů pro sebrání všech pěšců na šachovnici. Příklad výsputu je na obrázku  \ref{fig:output-example}.
 
     \begin{figure}[h]
         \begin{center}
@@ -90,11 +90,26 @@
         \label{fig:board-example}
     \end{figure}
 
+    \begin{figure}[h]
+        \begin{center}
+            \begin{BVerbatim}
+                4,4 *
+                2,1
+                3,3
+                1,3 *
+                4,2 *
+            \end{BVerbatim}
+        \end{center}
+        \caption{Příklad výstupu. Každá řádka obsahuje souřadnice na šachovnici, kam se v daném tahu kůň nebo střelec přesunul. Hvězdička značí, že při daném tahu byl sebrán pěšec.}
+        \label{fig:output-example}
+    \end{figure}
 
+
+    \pagebreak
     \label{subsec:seq-heuristics}
 
-    \subsection{Heuristiky}
 
+    \subsection{Heuristiky}
     Sekvenční algoritmus používá dvě heuristiky pro pohyb střelce a koně.
 
     \heuristika{střelec} Z množiny možných políček, kam je možné střelce přemístit jsou preferována ty,
@@ -105,10 +120,25 @@
     \heuristika{kůň} Z množiny možných políček, kam je možné koně přemístit jsou preferována ty,
     která obsahují pěšce. Pokud takové políčko neexistuje, jsou preferována políčka, z kterých
     kůň ve svém následujícím tahu může vzít pěšáka. Pokud ani takové políčko neexistuje, jsou
-    preferováno políčka, z kterých kůň v následujícíh dvou tazích může vzít pěšáka.
+    preferována políčka, z kterých kůň v následujícíh dvou tazích může vzít pěšáka.
     Jinak se pohyb koně rozhodne náhodně.
 
-    \subsection{Pseudokód}
+    \subsection{Naměřené sekvenčí časy}
+
+    \begin{table}[hb!]
+        \centering
+        \begin{tabular}{|c|c|}
+            \hline
+            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{{}doba běhu} {[}m{]}} \\ \hline
+            saj7                           & 1.727                                       \\ \hline
+            saj10                          & 8.163                                       \\ \hline
+            saj12                          & 4.542                                       \\ \hline
+        \end{tabular}
+        \caption{Sekvenční algoritmus -- doba běhu v minutách.}
+        \label{tab:seq}
+    \end{table}
+
+    \subsection{Pseudokód sekvenčního algoritmu}
     \begin{algorithm}[H]
         \SetAlgoLined
         \DontPrintSemicolon
@@ -574,18 +604,7 @@
     \end{table}
 
     \subsection{Naměřené časy}
-    \begin{table}[hb!]
-        \centering
-        \begin{tabular}{|c|c|}
-            \hline
-            \multicolumn{1}{|l|}{\textbf{instance}} & \multicolumn{1}{l|}{\textbf{{}doba běhu} {[}m{]}} \\ \hline
-            saj7                           & 1.727                                       \\ \hline
-            saj10                          & 8.163                                       \\ \hline
-            saj12                          & 4.542                                       \\ \hline
-        \end{tabular}
-        \caption{Sekvenční algoritmus -- doba běhu v minutách.}
-        \label{tab:seq}
-    \end{table}
+
 
     \begin{table}[h]
         \centering
